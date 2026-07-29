@@ -1,0 +1,355 @@
+{% extends "base.html" %} {% block title %}Profile — Husky Reading Log{% endblock %}
+
+{% block content %}
+<style>
+  .profile-container {
+    max-width: 1020px;
+    margin: 36px auto 56px auto;
+    padding: 0 16px;
+  }
+
+  .page-title {
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    font-size: 32px;
+  }
+
+  /* ── Profile header card ── */
+  .profile-header-card {
+    background: var(--card-bg);
+    border-radius: var(--r-xxxl);
+    padding: 32px;
+    box-shadow: rgba(5, 0, 56, 0.12) 0px 12px 32px -4px;
+    border: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-bottom: 24px;
+  }
+
+  .profile-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--morgan-blue);
+    box-shadow: 0 0 0 4px rgba(35, 64, 139, 0.25), 0 4px 16px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+  }
+
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .profile-name {
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.3px;
+  }
+
+  /* Role badge — pill style from DESIGN.md */
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: var(--r-full);
+    font-size: 13px;
+    font-weight: 600;
+    width: fit-content;
+  }
+
+  .role-badge.student {
+    background: rgba(35, 64, 139, 0.2);
+    color: var(--accent);
+    border: 1px solid rgba(35, 64, 139, 0.4);
+  }
+
+  .role-badge.teacher {
+    background: rgba(255, 107, 107, 0.12);
+    color: #ff8a8a;
+    border: 1px solid rgba(255, 107, 107, 0.25);
+  }
+
+  /* ── Section cards ── */
+  .section-card {
+    background: var(--card-bg);
+    border-radius: var(--r-xxl);
+    padding: 28px;
+    border: 1px solid var(--card-border);
+    box-shadow: rgba(5, 0, 56, 0.06) 0px 4px 12px 0px;
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.2px;
+  }
+
+  /* ── Classes grid ── */
+  .classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .class-card-item {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-xl);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .class-card-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(35, 64, 139, 0.4);
+    box-shadow: rgba(5, 0, 56, 0.1) 0px 8px 20px -4px;
+  }
+
+  .class-name {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  /* Class code — badge-tag-purple style */
+  .class-code-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(35, 64, 139, 0.18);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: var(--r-full);
+    font-size: 12px;
+    font-family: monospace;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    border: 1px solid rgba(35, 64, 139, 0.3);
+    width: fit-content;
+  }
+
+  .class-meta {
+    color: var(--ink-muted);
+    font-size: 13px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* ── Stats grid ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: rgba(255, 255, 255, 0.025);
+    border-radius: var(--r-xl);
+    padding: 22px;
+    text-align: center;
+    border: 1px solid var(--card-border);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(35, 64, 139, 0.35);
+  }
+
+  .stat-label {
+    color: var(--ink-muted);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-value {
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  /* ── Streak card ── */
+  .streak-card {
+    background: rgba(35, 64, 139, 0.08);
+    border: 1px solid rgba(35, 64, 139, 0.2);
+    border-radius: var(--r-xl);
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .fire-emoji {
+    font-size: 38px;
+    margin-bottom: 6px;
+    display: inline-block;
+    animation: fire-flicker 0.6s ease-in-out infinite;
+  }
+
+  @keyframes fire-flicker {
+    0%, 100% { transform: scale(1) rotateZ(-2deg); }
+    50%       { transform: scale(1.06) rotateZ(2deg); }
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 36px 16px;
+    color: var(--ink-muted);
+  }
+
+  .empty-state i {
+    font-size: 32px;
+    color: var(--morgan-blue);
+    margin-bottom: 10px;
+    opacity: 0.7;
+    display: block;
+  }
+
+  @media (max-width: 640px) {
+    .profile-header-card {
+      flex-direction: column;
+      text-align: center;
+      gap: 16px;
+    }
+    .role-badge { margin: 0 auto; }
+    .class-code-badge { margin: 0 auto; }
+  }
+</style>
+
+<div class="profile-container">
+  <h1 class="page-title">👤 Profile</h1>
+
+  <!-- Profile Header -->
+  <div class="profile-header-card">
+    <img
+      src="{{ url_for('static', filename='images/pfp.jpg') }}"
+      alt="Profile Picture"
+      class="profile-avatar"
+      onerror="this.onerror=null; this.src='{{ url_for('static', filename='pfp.jpg') }}';"
+    >
+    <div class="profile-info">
+      <h2 class="profile-name">{{ user.first_name }}</h2>
+      <div>
+        {% if user.is_admin %}
+          <span class="role-badge teacher">🍎 Teacher</span>
+        {% else %}
+          <span class="role-badge student">🎓 Student</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Classes Section -->
+  <div class="section-card">
+    <h2 class="section-title">🏫 Enrolled Classes</h2>
+
+    {% if not user.is_admin %}
+      {% if user.involvement %}
+        <div class="classes-grid">
+          {% for enrollment in user.involvement %}
+            <div class="class-card-item">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <h3 class="class-name">{{ enrollment.classes.class_name }}</h3>
+                <span class="class-code-badge">🔑 {{ enrollment.classes.class_code }}</span>
+              </div>
+              <p class="class-meta">
+                <i class="fa fa-user-circle"></i>
+                Teacher: {{ enrollment.classes.teacher.first_name if enrollment.classes.teacher else 'Unknown' }}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <i class="fa fa-university"></i>
+          <p style="margin: 0; font-size: 14px;">You haven't joined any classes yet. Enter a class code on the Home page to join!</p>
+        </div>
+      {% endif %}
+    {% else %}
+      {% if user.teacher_class %}
+        <div class="classes-grid">
+          {% for single_class in user.teacher_class %}
+            <div class="class-card-item">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <h3 class="class-name">{{ single_class.class_name }}</h3>
+                <span class="class-code-badge">🔑 {{ single_class.class_code }}</span>
+              </div>
+              <p class="class-meta">
+                <i class="fa fa-users"></i>
+                {{ single_class.enrollments | length if single_class.enrollments else 0 }} Enrolled Students
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <i class="fa fa-university"></i>
+          <p style="margin: 0; font-size: 14px;">No classes created yet. Go to the Admin Panel to create your first class!</p>
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- Reading Statistics -->
+  <div class="section-card">
+    <h2 class="section-title">📊 Reading Statistics</h2>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">📚 Most Read Genre</div>
+        <div class="stat-value">{{ most_genre if most_genre else 'None' }}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">✍️ Most Read Author</div>
+        <div class="stat-value">{{ most_author if most_author else 'None' }}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">⏱️ Total Reading Time</div>
+        <div class="stat-value">
+          {{ total_minutes }}
+          <span style="font-size: 14px; color: var(--ink-muted); font-weight: 500;">mins</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Streak -->
+    <div class="streak-card">
+      <div class="stat-label">🔥 Current Reading Streak</div>
+      <div class="fire-emoji">🔥</div>
+      <div class="stat-value" style="color: #ff9f59;">{{ reading_streak }} day{{ 's' if reading_streak != 1 else '' }}</div>
+      <p style="color: var(--ink-muted); font-size: 13px; margin-top: 6px; margin-bottom: 0;">Keep the reading streak going!</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

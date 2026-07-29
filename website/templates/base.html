@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link
+          rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+          crossorigin="anonymous"
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+          crossorigin="anonymous"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+
+        <title>{% block title %}Home{% endblock %}</title>
+
+        <style>
+          /* ── Design System Tokens ── */
+          :root {
+            --morgan-blue: #23408b;
+            --morgan-blue-deep: #1a3070;
+            --morgan-blue-light: rgba(35, 64, 139, 0.15);
+            --accent: #4b7cf3;
+            --accent-glow: rgba(75, 124, 243, 0.25);
+            --bg: #0b1422;
+            --bg-surface: #0f1e35;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.07);
+            --hairline: rgba(255, 255, 255, 0.08);
+            --ink: #ffffff;
+            --ink-muted: #8a9ab5;
+            --ink-soft: rgba(255, 255, 255, 0.55);
+            --success: #00b473;
+            --error: #ff6b6b;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* Radius tokens from DESIGN.md */
+            --r-sm: 6px;
+            --r-md: 8px;
+            --r-lg: 12px;
+            --r-xl: 16px;
+            --r-xxl: 20px;
+            --r-xxxl: 28px;
+            --r-full: 9999px;
+
+            /* Spacing tokens */
+            --sp-xs: 8px;
+            --sp-sm: 12px;
+            --sp-md: 16px;
+            --sp-lg: 20px;
+            --sp-xl: 24px;
+            --sp-xxl: 32px;
+          }
+
+          /* ── Global Reset ── */
+          *, *::before, *::after { box-sizing: border-box; }
+
+          body {
+            background-color: var(--bg);
+            font-family: var(--font);
+            color: var(--ink);
+            margin: 0;
+            padding: 0;
+          }
+
+          /* ── Profile pic (kept for any legacy usage) ── */
+          .profile-pic {
+            border-radius: 50px;
+            height: 30px;
+            width: 30px;
+          }
+
+          /* ── Navbar ── */
+          .site-nav {
+            background: var(--morgan-blue);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+          }
+
+          .nav-wordmark {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+          }
+          .nav-wordmark:hover { color: rgba(255,255,255,0.85); text-decoration: none; }
+
+          .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+          }
+
+          .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 7px 14px;
+            border-radius: var(--r-full);
+            border: 1px solid transparent;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+            white-space: nowrap;
+          }
+          .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            text-decoration: none;
+          }
+          .nav-links a.nav-active {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+          }
+
+          /* Logout pill CTA */
+          .nav-cta {
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            font-weight: 600 !important;
+          }
+          .nav-cta:hover {
+            background: rgba(255, 255, 255, 0.25) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+          }
+
+          /* ── Flash Messages ── */
+          .flash-region {
+            max-width: 960px;
+            margin: 16px auto 0 auto;
+            padding: 0 16px;
+          }
+
+          .flash-msg {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            border-radius: var(--r-lg);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+            animation: flash-in 0.2s ease;
+          }
+
+          @keyframes flash-in {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+
+          .flash-msg.flash-error {
+            background: rgba(255, 107, 107, 0.1);
+            border-color: rgba(255, 107, 107, 0.25);
+            color: #ff8a8a;
+          }
+
+          .flash-msg.flash-success {
+            background: rgba(0, 180, 115, 0.1);
+            border-color: rgba(0, 180, 115, 0.25);
+            color: #33d99a;
+          }
+
+          .flash-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: inherit;
+            opacity: 0.6;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            line-height: 1;
+          }
+          .flash-close:hover { opacity: 1; }
+
+          /* ── Main Container ── */
+          .main-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+          }
+        </style>
+    </head>
+
+    <body>
+        <!-- Navigation -->
+        <nav class="site-nav">
+          <a href="/" class="nav-wordmark">
+            Husky Reading Log
+          </a>
+
+          {%if user.is_authenticated %}
+          <ul class="nav-links">
+            <li><a href="/" id="home">Home</a></li>
+            <li><a href="/recommendations" id="recommendations">Recommendations</a></li>
+            <li><a href="/achievement" id="achievement">Assignments</a></li>
+            <li><a href="/leaderboards" id="leaderboards">Leaderboards</a></li>
+            <li><a href="/profile" id="stats">Profile</a></li>
+            {% if current_user.is_admin %}
+            <li><a href="/admin" id="admin">Admin</a></li>
+            {% endif %}
+            {% if current_user.email == 'taha.hussaini@clintonpublic.net' %}
+            <li><a href="/manage" id="admin">Manage</a></li>
+            {% endif %}
+            <li><a href="/logout" id="logout" class="nav-cta">Logout</a></li>
+          </ul>
+          {% else %}
+          <ul class="nav-links">
+            <li><a href="/login" id="login">Login</a></li>
+            <li><a href="/sign-up" id="signUp" class="nav-cta">Sign Up</a></li>
+          </ul>
+          {% endif %}
+        </nav>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-region">
+          {% for category, message in messages %}
+          <div class="flash-msg {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
+            <i class="fa {% if category == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+            <span>{{ message }}</span>
+            <button class="flash-close" onclick="this.parentElement.remove()">✕</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Page Content -->
+        <div class="container">{% block content %} {% endblock %}
+        </div>
+
+        <script
+          src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+          integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+          crossorigin="anonymous"
+        ></script>
+        <script
+          src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+          integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+          crossorigin="anonymous"
+        ></script>
+        <script
+          src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+          integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+          crossorigin="anonymous"
+        ></script>
+
+        {% block javascript %}
+        <script type="text/javascript">
+          function deleteNote(noteId) {
+            fetch("/delete-note", {
+              method: "POST",
+              body: JSON.stringify({ noteId: noteId }),
+            }).then((_res) => {
+              window.location.href = "/";
+            });
+          }
+        </script>
+        {% endblock %}
+    </body>
+
+
+
+</html>

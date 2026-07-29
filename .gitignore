@@ -1,0 +1,17 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+# Secrets and configuration
+.env
+.env.production
+# Databases
+instance/
+website/database.db
+*.db
+*.sqlite
+# Python cache files
+__pycache__/
+*.pyc
+# Mac system files
+.DS_Store

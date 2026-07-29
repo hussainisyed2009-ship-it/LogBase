@@ -1,0 +1,269 @@
+{% extends "base.html" %} {% block title %}My Assignments — Husky Reading Log{% endblock %}
+
+{% block content %}
+<style>
+  .goals-container {
+    max-width: 1040px;
+    margin: 36px auto 48px auto;
+    padding: 0 16px;
+  }
+
+  .page-header {
+    margin-bottom: 36px;
+    text-align: center;
+  }
+
+  .page-title {
+    color: #ffffff;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+
+  .page-subtitle {
+    color: var(--ink-muted);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  /* Goals grid */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  /* Goal card — DESIGN.md card-feature style */
+  .goal-card {
+    background: var(--card-bg);
+    border-radius: var(--r-xxxl);
+    padding: var(--sp-xxl);
+    border: 1px solid var(--card-border);
+    box-shadow: rgba(5, 0, 56, 0.06) 0px 4px 12px 0px;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .goal-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(35, 64, 139, 0.4);
+    box-shadow: rgba(5, 0, 56, 0.12) 0px 12px 32px -4px;
+  }
+
+  .goal-card.completed {
+    border-color: rgba(0, 180, 115, 0.2);
+    background: rgba(0, 180, 115, 0.04);
+  }
+  .goal-card.completed:hover {
+    border-color: rgba(0, 180, 115, 0.4);
+  }
+
+  .goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .goal-text {
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  /* Pill status badges — DESIGN.md badge style */
+  .status-badge {
+    padding: 4px 12px;
+    border-radius: var(--r-full);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .status-badge.active {
+    background: rgba(35, 64, 139, 0.2);
+    color: var(--accent);
+    border: 1px solid rgba(35, 64, 139, 0.4);
+  }
+
+  .status-badge.completed {
+    background: rgba(0, 180, 115, 0.15);
+    color: #00d98b;
+    border: 1px solid rgba(0, 180, 115, 0.3);
+  }
+
+  /* Progress section */
+  .progress-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .progress-val {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .progress-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: var(--r-full);
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    border-radius: var(--r-full);
+    background: linear-gradient(90deg, var(--morgan-blue), #4b7cf3);
+    transition: width 0.5s ease;
+  }
+
+  .goal-card.completed .progress-bar {
+    background: linear-gradient(90deg, #00b473, #33d99a);
+  }
+
+  /* Goal footer */
+  .goal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--hairline);
+    padding-top: 12px;
+  }
+
+  .date-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* Empty state */
+  .no-goals {
+    text-align: center;
+    padding: 72px 20px;
+    color: var(--ink-muted);
+    background: var(--card-bg);
+    border-radius: var(--r-xxxl);
+    border: 1px solid var(--card-border);
+  }
+
+  .no-goals i {
+    font-size: 48px;
+    color: var(--morgan-blue);
+    margin-bottom: 16px;
+    opacity: 0.7;
+    display: block;
+  }
+
+  /* Confetti */
+  @keyframes confetti-fall {
+    0%   { transform: translateY(-100vh) rotateZ(0deg);   opacity: 1; }
+    100% { transform: translateY(100vh)  rotateZ(720deg); opacity: 0; }
+  }
+
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    animation: confetti-fall 3s ease-in forwards;
+    z-index: 9999;
+  }
+</style>
+
+<div class="goals-container">
+  <div class="page-header">
+    <h1 class="page-title">🎯 My Assignments</h1>
+    <p class="page-subtitle">Track your reading milestones and progress</p>
+  </div>
+
+  {% if goals %}
+    <div class="goals-grid">
+      {% for goal in goals %}
+        {% set pct = (goal.complete_mins / goal.target * 100) | round | int %}
+        {% if pct > 100 %}{% set pct = 100 %}{% endif %}
+        {% set is_completed = goal.complete_mins >= goal.target %}
+
+        <div class="goal-card {% if is_completed %}completed{% endif %}">
+          <div class="goal-header">
+            <p class="goal-text">{{ goal.goal_desc }}</p>
+            <span class="status-badge {% if is_completed %}completed{% else %}active{% endif %}">
+              {% if is_completed %}🏆 Done{% else %}⚡ Active{% endif %}
+            </span>
+          </div>
+
+          <div class="progress-section">
+            <div class="progress-labels">
+              <span>Progress</span>
+              <span class="progress-val">{{ goal.complete_mins }} / {{ goal.target }} mins ({{ pct }}%)</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar" style="width: {{ pct }}%;"></div>
+            </div>
+          </div>
+
+          <div class="goal-footer">
+            <div class="date-item">
+              <i class="fa fa-calendar-check-o"></i>
+              <span>Due: {{ goal.due.split(' ')[0] }}</span>
+            </div>
+            <div class="date-item">
+              <i class="fa fa-clock-o"></i>
+              <span>Created: {{ goal.creation_date.split(' ')[0] }}</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="no-goals">
+      <i class="fa fa-trophy"></i>
+      <p style="font-size: 16px; margin: 0;">No active reading assignments found. Keep logging your reads!</p>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  function createConfetti() {
+    const colors = ['#23408b', '#4b7cf3', '#00b473', '#33d99a', '#a5b4fc'];
+    const confettiCount = 60;
+    for (let i = 0; i < confettiCount; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.animationDelay = (Math.random() * 0.4) + 's';
+      confetti.style.animationDuration = (2.2 + Math.random() * 1.2) + 's';
+      document.body.appendChild(confetti);
+      setTimeout(() => confetti.remove(), 3800);
+    }
+  }
+
+  window.addEventListener('load', function() {
+    const completedCards = document.querySelectorAll('.goal-card.completed');
+    if (completedCards.length > 0) {
+      setTimeout(() => createConfetti(), 400);
+    }
+  });
+</script>
+{% endblock %}
