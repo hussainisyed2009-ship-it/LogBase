@@ -230,12 +230,14 @@
             <li><a href="/achievement" id="achievement">Assignments</a></li>
             <li><a href="/leaderboards" id="leaderboards">Leaderboards</a></li>
             <li><a href="/profile" id="stats">Profile</a></li>
+            {#
             {% if current_user.is_admin %}
             <li><a href="/admin" id="admin">Admin</a></li>
             {% endif %}
             {% if current_user.email == 'taha.hussaini@clintonpublic.net' %}
             <li><a href="/manage" id="admin">Manage</a></li>
             {% endif %}
+            #}
             <li><a href="/logout" id="logout" class="nav-cta">Logout</a></li>
           </ul>
           {% else %}

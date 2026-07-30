@@ -5,7 +5,7 @@ import json
 import re
 
 
-def call_LLM(most_author, most_genre, background_info):
+def call_LLM(most_author, most_genre, background_info): # change the backgroudn info passed in so it is a discription of the user
     # Load the environment variables from the production env file
     load_dotenv('.env.production', override=True)
     

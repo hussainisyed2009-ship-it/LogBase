@@ -2,12 +2,11 @@ from flask import Blueprint, render_template, request, flash, json, jsonify, red
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
-from .models import Log_reading, User, Recommend, goals, class_list, class_enrollment
+from .models import Log_reading, User, Recommend, goals
 from . import db
 import requests
 from .llm import call_LLM
-from .goals import getGoals, get_goals_student, get_goals_student_stats
-from .classes import get_classes_for_teacher
+from .goals import getGoals, get_goals_student
 import secrets
 import string
 
@@ -365,15 +364,6 @@ def fetch_recommendations():
     db.session.commit()
     return jsonify(response_json), 200
 
-@views.route('/admin', methods=['GET'])
-@login_required
-def admin_page():
-    '''
-    DONT NEED THIS ANYMORE, REINCROPRATE THIS LOGIC INTO THE GOALS PAGE
-    '''
-    goals = getGoals(current_user)
-    return render_template("admin.html", user=current_user, goals=goals, classes=current_user.teacher_class,)
-
 @views.route('/admin/goals/delete/<goalId>', methods=['DELETE'])
 @login_required
 def delete_goal(goalId):
@@ -468,193 +458,3 @@ def edit_goal():
     # Redirect back to the admin page to refresh the view and close the modal
     return redirect(url_for('views.admin_page'))
 
-@views.route('/admin/track/<int:goalId>', methods=['GET'])
-@login_required
-def track_for_each_student(goalId):
-    '''
-    refactor this function so it works only for minute goals, other types of goals need their own logic
-    '''
-
-    # query table for goal data
-    goal = goals.query.get(goalId)
-    data_list = []
-
-    # get list of users
-    all_students = User.query.all()
-    # loop through each users
-    for student in all_students:
-        # get total minutes only for that goal
-        total_minutes = get_goals_student_stats(student.id, goal)
-
-        # append to data list
-        data_to_append = {
-            'name': student.first_name,
-            'complete_mins': total_minutes,
-        }
-        data_list.append(data_to_append)
-    return jsonify(data_list), 200
-
-@views.route('/admin/create-class', methods=['POST'])
-@login_required
-def create_class():
-    '''
-    Dont need this anymore
-    '''
-    # get the class name from the form
-    class_name = request.form.get('class_name')
-
-    def get_code():
-        # generate random code for class
-        while True:
-            # create the data pool
-            alphanumerics = string.ascii_uppercase + string.digits
-
-            # uses secrets to create a random code
-            code = ''.join(secrets.choice(alphanumerics) for _ in range(5))
-
-            # check if code exists in db
-            exists = class_list.query.filter_by(
-                class_code = code
-            ).first()
-
-            # check
-            if exists == None:
-                return code
-    # run func to get code
-    code = get_code()
-
-    new_class = class_list(class_name=class_name, admin_id=current_user.id, class_code=code)
-    db.session.add(new_class)
-    db.session.commit()
-
-    flash('Class created succesfully!', category='success')
-    return redirect(url_for('views.admin_page'))
-
-@views.route('/admin/class/delete/<int:classId>', methods=['DELETE'])
-@login_required
-def delete_class(classId):
-    '''
-    Dont need this anymore
-    '''
-    clas = class_list.query.get(classId)
-    if clas:
-        db.session.delete(clas)
-        db.session.commit()
-        flash('Class Deleted', category='success')
-    return jsonify([]), 200
-
-@views.route('/admin/class/edit', methods=["POST"])
-@login_required
-def edit_class():
-    '''
-    Dont need this anymore
-    '''
-    new_class_name = request.form.get('class_name')
-    id = request.form.get('class_id')
-
-    clas = class_list.query.get(id)
-    if clas:
-        clas.class_name = new_class_name
-        db.session.commit()
-        flash('Class updated successfully!', category='success')
-    else:
-        flash('Error editing class, please try again later', category='error')
-
-    return redirect(url_for('views.admin_page'))
-
-@views.route('/admin/class/remove-student', methods=["POST"])
-@login_required
-def remove_student():
-    '''
-    Dont need this anymore
-    '''
-    enrollment_id = request.form.get('enrollment_id')
-
-    enrollment = class_enrollment.query.get(enrollment_id)
-
-    if enrollment:
-        db.session.delete(enrollment)
-        db.session.commit()
-        flash('Student removed successfully!', category='success')
-    else:
-        flash("Couldn't remove student, please try again later", category='error')
-    return redirect(url_for('views.admin_page'))
-
-@views.route('/join-class', methods=["POST"])
-@login_required
-def join_class():
-    '''
-    Dont need this anymore
-    '''
-    # get code from html
-    code = request.form.get('class_code')
-
-    # check if code is valid
-    if len(code) != 5:
-        flash('Class code must be 5 charecters long', category='error')
-        return redirect(url_for('views.home'))
-    # check if code exists in db
-    class_data = class_list.query.filter_by(class_code = code).first()
-
-    if class_data == None:
-        flash("Code doesn't match any class, please try again", category='error')
-        return redirect(url_for('views.home'))
-    # check if user is already in that class
-    past_enrollment = class_enrollment.query.filter_by(class_id=class_data.id, student_id=current_user.id).first()
-    if past_enrollment != None:
-        flash("Already in this class", category='error')
-        return redirect(url_for('views.home'))
-
-
-    # add user to class
-    new_enrollment = class_enrollment(class_id=class_data.id, student_id=current_user.id)
-    db.session.add(new_enrollment)
-    db.session.commit()
-    flash("Class joined successfully", category='success')
-    return redirect(url_for('views.home'))
-
-@views.route('/manage', methods=['GET'])
-@login_required
-def manage():
-    '''
-    Dont need this anymore
-    '''
-    user_data = User.query.with_entities(User.id, User.first_name, User.is_admin).order_by(User.first_name).all()
-
-    return render_template('manage.html', user=current_user, user_data=user_data)
-
-@views.route('take/admin', methods=['POST'])
-@login_required
-def take_admin():
-    '''
-    Dont need this anymore
-    '''
-    user_id = request.form.get('user_id')
-
-    user_data = User.query.get(user_id)
-
-    if user_data:
-        user_data.is_admin = False
-        db.session.commit()
-        flash("User previliages desclated succesfully", category='success')
-    else:
-        flash('User cannot be found', category='error')
-    return redirect(url_for('views.manage'))
-
-@views.route('give/admin', methods=['POST'])
-@login_required
-def give_admin():
-    '''
-    Dont need this anymore
-    '''
-    user_id = request.form.get('user_id')
-    
-    user_data = User.query.get(user_id)
-    
-    if user_data:
-        user_data.is_admin = True
-        db.session.commit()
-        flash("User previliages esclated succesfully", category='success')
-    else:
-        flash('User cannot be found', category='error')
-    return redirect(url_for('views.manage'))

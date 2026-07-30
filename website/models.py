@@ -18,6 +18,10 @@ class User(db.Model, UserMixin):
     streak_freezes = db.Column(db.Integer, CheckConstraint('streak_freezes <= 5'), default=0)      # Number of freezes owned
     freeze_used_today = db.Column(db.Boolean, default=False) # used to make sure multiple streak freezes aren't used at once
 
+class background_info(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True, nullable=False)
+    data = db.Column(db.JSON, nullable=False)
+
 class Log_reading(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -27,7 +31,6 @@ class Log_reading(db.Model):
     reading_time = db.Column(db.Integer, nullable=False)  # minutes read
     timestamp = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)  # when logged
     
-
 class Recommend(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -36,8 +39,9 @@ class Recommend(db.Model):
     common_genre = db.Column(db.String(150), nullable=False)
     data = db.Column(db.JSON, nullable=False)
     
-class user_goals(db.Model):
+class goals(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    created_by = (db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False))
     created_at = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     #which_class = db.Column(db.Integer, db.ForeignKey('class_list.id'), nullable=False)
     type_of_goal = db.Column(db.String(80), nullable=False)
