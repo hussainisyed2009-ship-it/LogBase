@@ -192,6 +192,16 @@ def home():
 @views.route('/achievement', methods=['GET'])
 @login_required
 def achievement():
+    '''
+    REMOVE ANY CLASS RELATED GOAL LOGIC, ALLOW USER'S TO CREATE GOALS FOR THEMSELVES
+
+    Add 3 different types of goals:
+     1. the basic minute based goals
+     2. Goal where the user has to read book from their recommendations
+     3. goal where the user has to read x number of different books in a certain period of time
+    '''
+
+
     # time for right now
     now = datetime.now(timezone.utc)
     # looks for goals
@@ -285,6 +295,10 @@ def profile():
 @views.route('/recommendations', methods=['GET'])
 @login_required
 def recommend():
+
+    '''
+    ADJUST THE LLM PROMPT SO IT FITS THE USER
+    '''
     most_author = get_most_read_author(current_user.id)
     most_genre = get_most_read_genre(current_user.id)
 
@@ -354,6 +368,9 @@ def fetch_recommendations():
 @views.route('/admin', methods=['GET'])
 @login_required
 def admin_page():
+    '''
+    DONT NEED THIS ANYMORE, REINCROPRATE THIS LOGIC INTO THE GOALS PAGE
+    '''
     goals = getGoals(current_user)
     return render_template("admin.html", user=current_user, goals=goals, classes=current_user.teacher_class,)
 
@@ -374,7 +391,11 @@ def add_goal():
     goal_text = request.form.get('goal_text')
     goal_minutes_str = request.form.get('target_minutes')
     goal_due_date_str = request.form.get('due_date')
-    which_class_str = request.form.get('which_class')
+    which_class_str = request.form.get('which_class') # dont need this anymore
+
+    '''
+    add in different types of goals
+    '''
 
     if goal_text and goal_minutes_str and goal_due_date_str and which_class_str:
         try:
@@ -410,7 +431,7 @@ def edit_goal():
     goal_text = request.form.get('goal_text')
     goal_minutes_str = request.form.get('target_minutes')
     goal_due_date_str = request.form.get('due_date')
-    which_class_str = request.form.get('which_class')
+    which_class_str = request.form.get('which_class') # dont need this anymore
 
     if goal_text and goal_minutes_str and goal_due_date_str and which_class_str:
         try:
@@ -450,13 +471,17 @@ def edit_goal():
 @views.route('/admin/track/<int:goalId>', methods=['GET'])
 @login_required
 def track_for_each_student(goalId):
+    '''
+    refactor this function so it works only for minute goals, other types of goals need their own logic
+    '''
+
     # query table for goal data
     goal = goals.query.get(goalId)
     data_list = []
 
-    # get list of student
-    all_students = User.query.filter_by(is_admin=False).all()
-    # loop through each student
+    # get list of users
+    all_students = User.query.all()
+    # loop through each users
     for student in all_students:
         # get total minutes only for that goal
         total_minutes = get_goals_student_stats(student.id, goal)
@@ -472,6 +497,9 @@ def track_for_each_student(goalId):
 @views.route('/admin/create-class', methods=['POST'])
 @login_required
 def create_class():
+    '''
+    Dont need this anymore
+    '''
     # get the class name from the form
     class_name = request.form.get('class_name')
 
@@ -505,6 +533,9 @@ def create_class():
 @views.route('/admin/class/delete/<int:classId>', methods=['DELETE'])
 @login_required
 def delete_class(classId):
+    '''
+    Dont need this anymore
+    '''
     clas = class_list.query.get(classId)
     if clas:
         db.session.delete(clas)
@@ -515,6 +546,9 @@ def delete_class(classId):
 @views.route('/admin/class/edit', methods=["POST"])
 @login_required
 def edit_class():
+    '''
+    Dont need this anymore
+    '''
     new_class_name = request.form.get('class_name')
     id = request.form.get('class_id')
 
@@ -531,6 +565,9 @@ def edit_class():
 @views.route('/admin/class/remove-student', methods=["POST"])
 @login_required
 def remove_student():
+    '''
+    Dont need this anymore
+    '''
     enrollment_id = request.form.get('enrollment_id')
 
     enrollment = class_enrollment.query.get(enrollment_id)
@@ -546,6 +583,9 @@ def remove_student():
 @views.route('/join-class', methods=["POST"])
 @login_required
 def join_class():
+    '''
+    Dont need this anymore
+    '''
     # get code from html
     code = request.form.get('class_code')
 
@@ -576,6 +616,9 @@ def join_class():
 @views.route('/manage', methods=['GET'])
 @login_required
 def manage():
+    '''
+    Dont need this anymore
+    '''
     user_data = User.query.with_entities(User.id, User.first_name, User.is_admin).order_by(User.first_name).all()
 
     return render_template('manage.html', user=current_user, user_data=user_data)
@@ -583,6 +626,9 @@ def manage():
 @views.route('take/admin', methods=['POST'])
 @login_required
 def take_admin():
+    '''
+    Dont need this anymore
+    '''
     user_id = request.form.get('user_id')
 
     user_data = User.query.get(user_id)
@@ -598,6 +644,9 @@ def take_admin():
 @views.route('give/admin', methods=['POST'])
 @login_required
 def give_admin():
+    '''
+    Dont need this anymore
+    '''
     user_id = request.form.get('user_id')
     
     user_data = User.query.get(user_id)
