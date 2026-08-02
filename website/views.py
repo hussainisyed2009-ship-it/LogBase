@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, flash, json, jsonify, red
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
-from .models import Log_reading, User, Recommend, goals
+from .models import Log_reading, User, Recommend, goals, background_info
 from . import db
 import requests
 from .llm import call_LLM
@@ -11,6 +11,23 @@ import secrets
 import string
 
 views = Blueprint('views', __name__)
+
+@views.route('/survey', methods=['POST', 'GET'])
+def survey():
+    if request.method == 'POST':
+        data = {
+            "age": request.form.get('age_range'),
+            "genres": request.form.getlist('genres'),
+            "favorite_book": request.form.get('favorite_book'),
+            "reason": request.form.getlist('motivation')
+        }
+        # commit to db
+        new_info = background_info(user_id=current_user.id, data=data)
+        db.session.add(new_info)
+        db.session.commit()
+        return redirect(url_for('views.home'))
+    return render_template("survey.html", user=current_user)
+
 
 # save data from api
 @views.route("/api/book/save", methods=['POST'])
@@ -160,6 +177,10 @@ def get_all_reading_stats(user_id):
 @views.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
+    background = background_info.query.get(current_user.id)
+    if background == None:
+        return redirect(url_for('views.survey'))
+
     if request.method == 'POST':
         title = request.form.get('title')
         genre = request.form.get('genre')
@@ -331,11 +352,10 @@ def fetch_recommendations():
     # API guard: if the user has no logged books, don't call the LLM
     if not most_author or not most_genre:
         return jsonify([]), 200
-    background_info = "Grade: 9th grade, Reading level: above average, Likes: prefers story rich stories that are relevant and appropriate for hs students grade 9-12"
-
+    background = background_info.query.get(current_user.id)
     user_recommendation = Recommend.query.filter_by(user_id=current_user.id).first()
 
-    response = call_LLM(most_author=most_author, most_genre=most_genre, background_info=background_info)
+    response = call_LLM(most_author=most_author, most_genre=most_genre, background_info=background.data)
 
     if response is None:
         return jsonify({"error": "LLM unavailable, please try again later"}), 503
@@ -351,6 +371,7 @@ def fetch_recommendations():
     if user_recommendation is None:
         new_row = Recommend(
             user_id=current_user.id,
+            background_info = background.data,
             common_author=most_author or "None",
             common_genre=most_genre or "None",
             data=response_json
@@ -359,6 +380,7 @@ def fetch_recommendations():
     else:
         user_recommendation.common_author = most_author or "None"
         user_recommendation.common_genre = most_genre or "None"
+        user_recommendation.background_info = background.data or "None"
         user_recommendation.data = response_json
 
     db.session.commit()

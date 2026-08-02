@@ -141,8 +141,10 @@
             text-decoration: none;
           }
           .nav-links a.nav-active {
-            background: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
+            background: rgba(255, 255, 255, 0.25) !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
           }
 
           /* Logout pill CTA */
@@ -223,28 +225,30 @@
             Husky Reading Log
           </a>
 
-          {%if user.is_authenticated %}
-          <ul class="nav-links">
-            <li><a href="/" id="home">Home</a></li>
-            <li><a href="/recommendations" id="recommendations">Recommendations</a></li>
-            <li><a href="/achievement" id="achievement">Assignments</a></li>
-            <li><a href="/leaderboards" id="leaderboards">Leaderboards</a></li>
-            <li><a href="/profile" id="stats">Profile</a></li>
-            {#
-            {% if current_user.is_admin %}
-            <li><a href="/admin" id="admin">Admin</a></li>
+          {% if request.path != '/survey' %}
+            {% if user.is_authenticated %}
+            <ul class="nav-links">
+              <li><a href="/" id="home" class="{% if request.path == '/' %}nav-active{% endif %}">Home</a></li>
+              <li><a href="/recommendations" id="recommendations" class="{% if request.path == '/recommendations' %}nav-active{% endif %}">Recommendations</a></li>
+              <li><a href="/achievement" id="achievement" class="{% if request.path == '/achievement' %}nav-active{% endif %}">Assignments</a></li>
+              <li><a href="/leaderboards" id="leaderboards" class="{% if request.path == '/leaderboards' %}nav-active{% endif %}">Leaderboards</a></li>
+              <li><a href="/profile" id="stats" class="{% if request.path == '/profile' %}nav-active{% endif %}">Profile</a></li>
+              {#
+              {% if current_user.is_admin %}
+              <li><a href="/admin" id="admin">Admin</a></li>
+              {% endif %}
+              {% if current_user.email == 'taha.hussaini@clintonpublic.net' %}
+              <li><a href="/manage" id="admin">Manage</a></li>
+              {% endif %}
+              #}
+              <li><a href="/logout" id="logout" class="nav-cta">Logout</a></li>
+            </ul>
+            {% else %}
+            <ul class="nav-links">
+              <li><a href="/login" id="login" class="{% if request.path == '/login' %}nav-active{% endif %}">Login</a></li>
+              <li><a href="/sign-up" id="signUp" class="{% if request.path == '/sign-up' %}nav-active{% endif %}">Sign Up</a></li>
+            </ul>
             {% endif %}
-            {% if current_user.email == 'taha.hussaini@clintonpublic.net' %}
-            <li><a href="/manage" id="admin">Manage</a></li>
-            {% endif %}
-            #}
-            <li><a href="/logout" id="logout" class="nav-cta">Logout</a></li>
-          </ul>
-          {% else %}
-          <ul class="nav-links">
-            <li><a href="/login" id="login">Login</a></li>
-            <li><a href="/sign-up" id="signUp" class="nav-cta">Sign Up</a></li>
-          </ul>
           {% endif %}
         </nav>
 
