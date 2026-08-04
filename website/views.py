@@ -9,6 +9,7 @@ from .llm import call_LLM, get_cover
 from .goals import getGoals, get_goals_student
 import secrets
 import string
+from .best_sellers import get_best_sellers
 
 views = Blueprint('views', __name__)
 
@@ -317,8 +318,10 @@ def profile():
 def recommend():
 
     '''
-    ADJUST THE LLM PROMPT SO IT FITS THE USER
+    GET NY BEST SELLERS LIST
     '''
+    best_sellers = get_best_sellers()
+
     most_author = get_most_read_author(current_user.id)
     most_genre = get_most_read_genre(current_user.id)
 

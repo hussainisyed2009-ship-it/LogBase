@@ -18,6 +18,11 @@ class User(db.Model, UserMixin):
     streak_freezes = db.Column(db.Integer, CheckConstraint('streak_freezes <= 5'), default=0)      # Number of freezes owned
     freeze_used_today = db.Column(db.Boolean, default=False) # used to make sure multiple streak freezes aren't used at once
 
+class ny_times_best_sellers(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
+    data = db.Column(db.JSON, nullable=False)
+
 class background_info(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True, nullable=False)
     data = db.Column(db.JSON, nullable=False)
