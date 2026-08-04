@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from .models import Log_reading, User, Recommend, goals, background_info
 from . import db
 import requests
-from .llm import call_LLM
+from .llm import call_LLM, get_cover
 from .goals import getGoals, get_goals_student
 import secrets
 import string
@@ -362,6 +362,13 @@ def fetch_recommendations():
 
     try:
         response_json = json.loads(response)
+        for book in response_json:
+            cover_url = get_cover(book.get('title'))
+            if cover_url is not None:
+                book["image_url"] = cover_url
+                print(book)
+            else:
+                book["image_url"] = None
     except json.JSONDecodeError as e:
         print("JSON decode error:", e)
         print("Raw LLM response:", response)

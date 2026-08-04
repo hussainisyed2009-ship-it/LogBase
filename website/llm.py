@@ -1,8 +1,9 @@
 import os
 from dotenv import load_dotenv
 import requests
-import json
 import re
+from flask import json, jsonify
+
 
 
 def call_LLM(most_author, most_genre, background_info): # change the backgroudn info passed in so it is a discription of the user
@@ -37,9 +38,6 @@ def call_LLM(most_author, most_genre, background_info): # change the backgroudn 
                                f"1. 'title': The title of the book. "
                                f"2. 'author': The name of the author. "
                                f"3. 'date_written': The year the book was published/written. "
-                               f"4. 'image_url': A cover image URL formatted as an Open Library cover link "
-                               f"using the book's ISBN-13 (e.g., https://covers.openlibrary.org/b/isbn/{{isbn}}-M.jpg) "
-                               f"or a placeholder image if the ISBN is unknown."
                 }
             ],
             "reasoning": {"enabled": False}
@@ -56,3 +54,28 @@ def call_LLM(most_author, most_genre, background_info): # change the backgroudn 
         return
 
     return response
+
+def get_cover(title):
+    # call open lib search
+    try:
+        response = requests.get(
+            f"https://openlibrary.org/search.json?title={title}&limit=1",
+            headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) read-a-lot/1.0"},
+            timeout=7
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+    except requests.exceptions.Timeout:
+        print("error getting data")
+        data = None
+
+    if data and data.get("docs"):
+        first_book = data["docs"][0]
+        cover_id = first_book.get('cover_i')
+        if cover_id is not None:
+            return f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg"
+        else:
+            return None
+    return None
+
