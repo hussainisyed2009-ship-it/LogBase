@@ -162,7 +162,7 @@
   }
 </style>
 
-<h1 class="page-title">📖 Recommended For You</h1>
+<h1 class="page-title">Recommended For You</h1>
 <p class="page-subtitle">Personalised picks based on your reading history</p>
 
 {% if loading %}
@@ -282,5 +282,105 @@
     <p>No recommendations yet! Log some books first and we'll suggest what to read next.</p>
   </div>
 {% endif %}
+
+{% if best_sellers %}
+  <!-- Section Divider -->
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
+    <hr style="border: none; height: 1px; background: var(--hairline); margin: 0 0 40px 0;">
+  </div>
+
+  <!-- NY Times Best Sellers Header -->
+  <h2 class="nyt-section-title">NY Times Best Sellers Of The Week</h2>
+
+  <!-- Horizontal scroll row -->
+  <div class="nyt-scroll-wrapper">
+    <div class="nyt-scroll-row">
+      {% for book in best_sellers.data %}
+        <div class="nyt-card">
+          <div class="nyt-rank">#{{ book.id }}</div>
+          <div class="cover-wrapper">
+            <div class="book-cover-fallback" style="font-size: 14px; color: var(--ink-muted);">No Cover</div>
+            {% if book.cover %}
+              <img
+                class="book-cover"
+                src="{{ book.cover }}"
+                alt="{{ book.title }} cover"
+                onerror="this.style.display='none';"
+              >
+            {% endif %}
+          </div>
+          <p class="book-title">{{ book.title }}</p>
+          <p class="book-author">{{ book.author }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+<style>
+  /* ── NY Times Best Sellers Section ── */
+  .nyt-section-title {
+    color: #ffffff;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin: 0 0 28px 0;
+  }
+
+  .nyt-scroll-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px 48px 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .nyt-scroll-wrapper::-webkit-scrollbar {
+    height: 6px;
+  }
+  .nyt-scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .nyt-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--r-full);
+  }
+
+  .nyt-scroll-row {
+    display: flex;
+    gap: 20px;
+    padding-bottom: 4px;
+  }
+
+  .nyt-card {
+    background: var(--card-bg);
+    border-radius: var(--r-xxl);
+    padding: 20px 16px;
+    text-align: center;
+    border: 1px solid var(--card-border);
+    box-shadow: rgba(5, 0, 56, 0.06) 0px 4px 12px 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    width: 180px;
+  }
+
+  .nyt-rank {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    letter-spacing: 0.3px;
+  }
+
+  @media (max-width: 768px) {
+    .nyt-section-title { font-size: 20px; }
+    .nyt-scroll-row { gap: 14px; }
+    .nyt-card { width: 160px; padding: 16px 12px; }
+  }
+</style>
 
 {% endblock %}

@@ -61,7 +61,7 @@ def get_cover(title):
         response = requests.get(
             f"https://openlibrary.org/search.json?title={title}&limit=1",
             headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) read-a-lot/1.0"},
-            timeout=7
+            timeout=10
         )
 
         if response.status_code == 200:

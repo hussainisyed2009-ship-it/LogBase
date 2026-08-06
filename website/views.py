@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, flash, json, jsonify, red
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
-from .models import Log_reading, User, Recommend, goals, background_info
+from .models import Log_reading, User, Recommend, goals, background_info, ny_times_best_sellers
 from . import db
 import requests
 from .llm import call_LLM, get_cover
@@ -320,14 +320,14 @@ def recommend():
     '''
     GET NY BEST SELLERS LIST
     '''
-    best_sellers = get_best_sellers()
+    best_sellers = ny_times_best_sellers.query.order_by(ny_times_best_sellers.created_at.desc()).first()
 
     most_author = get_most_read_author(current_user.id)
     most_genre = get_most_read_genre(current_user.id)
 
     # If the user hasn't logged any readings yet, skip LLM calls and show empty state
     if not most_author or not most_genre:
-        return render_template("recommendations.html", user=current_user, recommendations=None, loading=False)
+        return render_template("recommendations.html", user=current_user, recommendations=None, best_sellers=best_sellers, loading=False)
 
     user_recommendation = Recommend.query.filter_by(user_id=current_user.id).first()
 
@@ -340,10 +340,10 @@ def recommend():
 
     if needs_llm:
         # Render loading page immediately — JS will call /api/fetch-recommendations
-        return render_template("recommendations.html", user=current_user, recommendations=None, loading=True)
+        return render_template("recommendations.html", user=current_user, recommendations=None, best_sellers=best_sellers, loading=True)
 
     # Cache is fresh, render instantly with no LLM call
-    return render_template("recommendations.html", user=current_user, recommendations=user_recommendation.data, loading=False)
+    return render_template("recommendations.html", user=current_user, recommendations=user_recommendation.data, best_sellers=best_sellers, loading=False)
 
 
 @views.route('/api/fetch-recommendations', methods=['GET'])

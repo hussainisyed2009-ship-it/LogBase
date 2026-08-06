@@ -1,0 +1,1 @@
+0 0 * * 0 root /var/app/venv/staging-L2158/bin/python -m website.cron_nytimes > /var/log/nytimes_cron.log 2>&1
