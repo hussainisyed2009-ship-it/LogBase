@@ -221,30 +221,39 @@ def achievement():
      2. Goal where the user has to read book from their recommendations
      3. goal where the user has to read x number of different books in a certain period of time
     '''
+    all_user_goals = goals.query.filter(goals.created_by == current_user.id).all()
+    minutes_goals = [goal for goal in all_user_goals if goal.type_of_goal == 'minutes']
+    minute_goal_list = []
+
+    for mg in minutes_goals:
+        is_done = False
+        minutes = get_goals_student(current_user.id, mg.id) # get user minutes between time slot
+
+        if minutes >= int(mg.target):
+            is_done = True
+
+        if is_done != mg.done:
+            mg.done = is_done
+            db.session.commit()
 
 
-    # time for right now
-    now = datetime.now(timezone.utc)
-    # looks for goals
-    # loops over each enrolment
-    # then for each enrollment, gets goal from enrollments, then looks at classes to find the class info, then looks at goals table
-    all_goals =[goal for enrollment in current_user.involvement for goal in enrollment.classes.goals]
-    data_list = []
-    for goal in all_goals:
-        # get total minutes only for that goal
-        total_minutes = get_goals_student(current_user.id, goal.id)
-        if goal.due_date >= now:
-            # append to data list
-            data_to_append = {
-                'goal_desc': goal.goal_text,
-                'target': goal.target_minutes,
-                'complete_mins': total_minutes,
-                'due': goal.due_date.strftime('%Y-%m-%d %H:%M'),
-                'creation_date': goal.created_at.strftime('%Y-%m-%d %H:%M')
-            }
-            data_list.append(data_to_append)
+        append = {
+            'id': mg.id,
+            'created_at': mg.created_at,
+            'goal_type': mg.type_of_goal,
+            'desc': mg.goal_text,
+            'target': mg.target,
+            'due_date': mg.due_date,
+            'done': is_done
+        }
+        minute_goal_list.append(append)
+        
 
-    return render_template("achievement.html", user=current_user, goals=data_list)
+
+
+    
+
+    return render_template("achievement.html", user=current_user, minute_goal_stats=minute_goal_list, unique_goal_stats=, recommendation_goal_stats=,)
 
 
 @views.route('/leaderboards', methods=['GET'])

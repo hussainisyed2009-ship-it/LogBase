@@ -48,12 +48,11 @@ class goals(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_by = (db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False))
     created_at = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
-    #which_class = db.Column(db.Integer, db.ForeignKey('class_list.id'), nullable=False)
     type_of_goal = db.Column(db.String(80), nullable=False)
     goal_text = db.Column(db.String(300), nullable=False)
     target = db.Column(db.String(160), nullable=False)
     due_date = db.Column(db.DateTime(timezone=True), nullable=False)
-    #class_data = db.relationship('class_list', backref=db.backref('goals', cascade='all, delete-orphan'), lazy=True)
+    done = db.Column(db.Boolean, default=False)
 
 class weekly_goals(db.Model):
     id = db.Column(db.Integer, primary_key=True)
