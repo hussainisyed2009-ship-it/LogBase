@@ -6,7 +6,7 @@ from .models import Log_reading, User, Recommend, goals, background_info, ny_tim
 from . import db
 import requests
 from .llm import call_LLM, get_cover
-from .goals import getGoals, get_goals_student
+from .goals import getGoals, get_goals_student, match_book_goal
 import secrets
 import string
 from .best_sellers import get_best_sellers
@@ -222,6 +222,7 @@ def achievement():
      3. goal where the user has to read x number of different books in a certain period of time
     '''
     all_user_goals = goals.query.filter(goals.created_by == current_user.id).all()
+    # minute goal logic
     minutes_goals = [goal for goal in all_user_goals if goal.type_of_goal == 'minutes']
     minute_goal_list = []
 
@@ -240,20 +241,44 @@ def achievement():
         append = {
             'id': mg.id,
             'created_at': mg.created_at,
-            'goal_type': mg.type_of_goal,
             'desc': mg.goal_text,
             'target': mg.target,
             'due_date': mg.due_date,
             'done': is_done
         }
         minute_goal_list.append(append)
+
+    # goals where user has to read a book from recommendations
+    rec_goals = [rec_goal for rec_goal in all_user_goals if rec_goal.type_of_goal == 'rec']
+    rec_goal_list = [] # data on wether they completed the goal or not
+    rec_book_list = [] # book titles from recommendations
+
+    for rec in rec_goals:
+        rec_is_done = match_book_goal(current_user.id, rec.id, rec.target)
+
+        if rec.done != rec_is_done:
+            rec.done = rec_is_done
+            db.session.commit()
+
+        rec_append = {
+            'id': rec.id,
+            'created_at': rec.created_at,
+            'desc': rec.goal_text,
+            'target': rec.target,
+            'due_date': rec.due_date,
+            'done': rec_is_done
+        }
+        rec_goal_list.append(rec_append)
+    # fetch recommendations
+    rec = Recommend.query.filter(Recommend.user_id == current_user.id).first() # could be None
+    if rec is not None:
+        data = rec.data
+        for book in data:
+            rec_book_list.append(book.get('title'))
         
-
-
-
     
 
-    return render_template("achievement.html", user=current_user, minute_goal_stats=minute_goal_list, unique_goal_stats=, recommendation_goal_stats=,)
+    return render_template("achievement.html", user=current_user, minute_goal_stats=minute_goal_list, unique_goal_stats=None, recommendation_goal_stats=rec_goal_list, rec_books=rec_book_list)
 
 
 @views.route('/leaderboards', methods=['GET'])

@@ -1,5 +1,5 @@
 from . import db
-from .models import goals, User, Log_reading
+from .models import goals, User, Log_reading, Recommend
 from sqlalchemy import func
 
 
@@ -24,5 +24,21 @@ def get_goals_student(studentId, goalId):
     ).scalar() or 0
 
     return minutes_from_goal_creation
+
+def match_book_goal(userId, goalId, target):
+    # get goal
+    goal = goals.query.get(goalId)
+
+    logs_from_goal_creation = Log_reading.query.filter(
+        Log_reading.user_id == userId,
+        Log_reading.timestamp >= goal.created_at,
+        Log_reading.timestamp <= goal.due_date
+    ).all() # logs from between created at and due date of goal
+
+    for log in logs_from_goal_creation:
+        if log.title.lower().strip() == target.lower().strip():
+            return True
+
+    return False
 
 
