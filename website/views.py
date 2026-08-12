@@ -249,7 +249,7 @@ def achievement():
         minute_goal_list.append(append)
 
     # goals where user has to read a book from recommendations
-    rec_goals = [rec_goal for rec_goal in all_user_goals if rec_goal.type_of_goal == 'rec']
+    rec_goals = [rec_goal for rec_goal in all_user_goals if rec_goal.type_of_goal == 'recommended']
     rec_goal_list = [] # data on wether they completed the goal or not
     rec_book_list = [] # book titles from recommendations
 
@@ -275,10 +275,32 @@ def achievement():
         data = rec.data
         for book in data:
             rec_book_list.append(book.get('title'))
+
+    # specific book goals
+    specific_book_goals = [spec_goal for spec_goal in all_user_goals if spec_goal.type_of_goal == 'specific']
+    spec_stats = []
+
+    for spec in specific_book_goals:
+        spec_is_done = match_book_goal(current_user.id, spec.id, spec.target)
+
+        if spec.done != spec_is_done:
+            spec.done = spec_is_done
+            db.session.commit()
+
+        spec_append = {
+            'id': spec.id,
+            'created_at': spec.created_at,
+            'desc': spec.goal_text,
+            'target': spec.target,
+            'due_date': spec.due_date,
+            'done': spec_is_done
+        }
+        spec_stats.append(spec_append)
+
         
     
 
-    return render_template("achievement.html", user=current_user, minute_goal_stats=minute_goal_list, unique_goal_stats=None, recommendation_goal_stats=rec_goal_list, rec_books=rec_book_list)
+    return render_template("achievement.html", user=current_user, minute_goal_stats=minute_goal_list, unique_goal_stats=spec_stats, recommendation_goal_stats=rec_goal_list, rec_books=rec_book_list)
 
 
 @views.route('/leaderboards', methods=['GET'])
@@ -445,29 +467,49 @@ def delete_goal(goalId):
 def add_goal():
     # Retrieve form data matching the 'name' attributes in the HTML form
     goal_text = request.form.get('goal_text')
-    goal_minutes_str = request.form.get('target_minutes')
+    goal_target = request.form.get('target') # need to change name in html, can also be a string depending on type
+    goal_type = request.form.get('tyep') # needs to be added to html
     goal_due_date_str = request.form.get('due_date')
-    which_class_str = request.form.get('which_class') # dont need this anymore
 
     '''
     add in different types of goals
     '''
 
-    if goal_text and goal_minutes_str and goal_due_date_str and which_class_str:
+    if goal_text and goal_target and goal_due_date_str and goal_type:
         try:
-            # Convert target_minutes to integer
-            target_minutes = int(goal_minutes_str)
-            which_class = int(which_class_str)
-            if target_minutes <= 0:
-                raise ValueError()
-
             # Parse datetime-local string format ('YYYY-MM-DDTHH:MM') to datetime object
             due_date = datetime.strptime(goal_due_date_str, '%Y-%m-%dT%H:%M')
-            
-            new_goal = goals(goal_text=goal_text, target_minutes=target_minutes, due_date=due_date, which_class=which_class)
-            db.session.add(new_goal)
-            db.session.commit()
-            flash('Goal Created!', category='success')
+            if goal_type == 'minutes':
+                # Convert target_minutes to integer
+                if len(goal_text) <= 4:
+                    flash('Goal description needs to be longer', category='error')
+
+                target = int(goal_target)
+                if target <= 0:
+                    raise ValueError()
+                
+                new_goal = goals(created_by=current_user.id, type_of_goal=goal_type, goal_text=goal_text, target=target, due_date=due_date)
+                db.session.add(new_goal)
+                db.session.commit()
+                flash('Goal Created!', category='success')
+            elif goal_type == 'recommended':
+                if len(goal_text) <= 4:
+                    flash('Goal description needs to be longer', category='error')
+
+                new_goal = goals(created_by=current_user.id, type_of_goal=goal_type, goal_text=goal_text, target=goal_target, due_date=due_date)
+                db.session.add(new_goal)
+                db.session.commit()
+                flash('Goal Created!', category='success')
+            elif goal_type == 'specific':
+                if len(goal_text) <= 4:
+                    flash('Goal description needs to be longer', category='error')
+
+                new_goal = goals(created_by=current_user.id, type_of_goal=goal_type, goal_text=goal_text, target=goal_target, due_date=due_date)
+                db.session.add(new_goal)
+                db.session.commit()
+                flash('Goal Created!', category='success')
+                
+        
         except ValueError:
             flash('Target minutes must be a valid number greater than 0', category='error')
         except Exception as e:
@@ -477,40 +519,67 @@ def add_goal():
         flash('Error creating goal, please input all fields and try again', category='error')
 
     # Redirect back to the admin page to refresh the view and close the modal
-    return redirect(url_for('views.admin_page'))
+    return redirect(url_for('views.achievement'))
 
 @views.route('/admin/goal/edit', methods=['POST'])
 @login_required
 def edit_goal():
-    # Retrieve form data matching the 'name' attributes in the HTML form
-    goal_id = request.form.get('goal_id')
+     # Retrieve form data matching the 'name' attributes in the HTML form
     goal_text = request.form.get('goal_text')
-    goal_minutes_str = request.form.get('target_minutes')
+    goal_target = request.form.get('target') # need to change name in html, can also be a string depending on type
+    goal_type = request.form.get('tyep') # needs to be added to html
     goal_due_date_str = request.form.get('due_date')
-    which_class_str = request.form.get('which_class') # dont need this anymore
+    goal_id = request.form.get('goal-id')
 
-    if goal_text and goal_minutes_str and goal_due_date_str and which_class_str:
+    '''
+    add in different types of goals
+    '''
+
+    if goal_text and goal_target and goal_due_date_str and goal_type:
+        goal = goals.query.get(goal_id)
         try:
-            # Convert target_minutes to integer
-            target_minutes = int(goal_minutes_str)
-            which_class = int(which_class_str)
-            if target_minutes <= 0:
-                raise ValueError()
-
             # Parse datetime-local string format ('YYYY-MM-DDTHH:MM') to datetime object
             due_date = datetime.strptime(goal_due_date_str, '%Y-%m-%dT%H:%M')
-            
+            if goal_type == 'minutes':
+                # Convert target_minutes to integer
+                if len(goal_text) <= 4:
+                    flash('Goal description needs to be longer', category='error')
+                    return redirect(url_for('views.achievement'))
 
-            # Fetch the goal from the database by its ID
-            goal = goals.query.get(goal_id)
-            if goal:
-                goal.goal_text = goal_text
-                goal.target_minutes = target_minutes
-                goal.due_date = due_date
-                goal.which_class = which_class
-                db.session.commit()
+                target = int(goal_target)
+                if target <= 0:
+                    raise ValueError()
                 
-                flash('Goal Edited!', category='success')
+                goal.goal_text = goal_text
+                goal.target = target
+                goal.type_of_goal = goal_type
+                goal.due_date = due_date
+                db.session.commit()
+                flash('Goal Created!', category='success')
+                return redirect(url_for('views.achievement'))
+            elif goal_type == 'recommended':
+                if len(goal_text) <= 4:
+                    flash('Goal description needs to be longer', category='error')
+                    return redirect(url_for('views.achievement'))
+
+                goal.goal_text = goal_text
+                goal.target = goal_target
+                goal.type_of_goal = goal_type
+                goal.due_date = due_date
+                db.session.commit()
+                flash('Goal Created!', category='success')
+            elif goal_type == 'specific':
+                if len(goal_text) <= 4:
+                    flash('Goal description needs to be longer', category='error')
+                    return redirect(url_for('views.achievement'))
+
+                goal.goal_text = goal_text
+                goal.target = goal_target
+                goal.type_of_goal = goal_type
+                goal.due_date = due_date
+                db.session.commit()
+                flash('Goal Created!', category='success')
+            
             else:
                 flash('Goal could not be edited, please try again', category='error')
         except ValueError:
@@ -522,5 +591,5 @@ def edit_goal():
         flash('Error editing goal, please input all fields and try again', category='error')
 
     # Redirect back to the admin page to refresh the view and close the modal
-    return redirect(url_for('views.admin_page'))
+    return redirect(url_for('views.achievement'))
 

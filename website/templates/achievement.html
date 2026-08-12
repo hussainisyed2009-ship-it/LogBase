@@ -1,68 +1,164 @@
-{% extends "base.html" %} {% block title %}My Assignments — Husky Reading Log{% endblock %}
+{% extends "base.html" %} {% block title %}My Goals — Husky Reading Log{% endblock %}
 
 {% block content %}
 <style>
+  /* ── Page layout ── */
   .goals-container {
     max-width: 1040px;
-    margin: 36px auto 48px auto;
-    padding: 0 16px;
+    margin: 36px auto 64px auto;
+    padding: 0 var(--sp-md);
   }
 
   .page-header {
-    margin-bottom: 36px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
   }
 
+  .page-header-text {}
+
   .page-title {
-    color: #ffffff;
-    font-size: 32px;
+    color: var(--ink);
+    font-size: 28px;
     font-weight: 700;
-    margin-bottom: 6px;
+    margin: 0 0 4px 0;
     letter-spacing: -0.5px;
+    line-height: 1.25;
   }
 
   .page-subtitle {
     color: var(--ink-muted);
     font-size: 14px;
     margin: 0;
+    line-height: 1.5;
   }
 
-  /* Goals grid */
+  /* ── Create Goal CTA — button-primary pill ── */
+  .create-goal-btn {
+    background: var(--ink);
+    color: var(--bg);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.3;
+    padding: 12px 24px;
+    border-radius: var(--r-full);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .create-goal-btn:hover {
+    background: #d4d4d4;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
+  }
+
+  /* ── Tab pills — pill-tab / pill-tab-active ── */
+  .goal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .goal-tab {
+    background: var(--card-bg);
+    color: var(--ink-muted);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 18px;
+    border-radius: var(--r-full);
+    border: 1px solid var(--card-border);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .goal-tab:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ink);
+    transform: translateY(-2px);
+  }
+  .goal-tab.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+    font-weight: 600;
+  }
+
+  .tab-count {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: var(--r-full);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--ink-muted);
+    line-height: 1.4;
+  }
+  .goal-tab.active .tab-count {
+    background: rgba(0, 0, 0, 0.15);
+    color: var(--bg);
+  }
+
+  /* ── Goal sections ── */
+  .goal-section {
+    display: none;
+  }
+  .goal-section.visible {
+    display: block;
+    animation: sectionIn 0.2s ease;
+  }
+  @keyframes sectionIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-heading {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 16px 4px;
+  }
+
+  /* ── Goals grid ── */
   .goals-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
   }
 
-  /* Goal card — DESIGN.md card-feature style */
+  /* ── Goal card — card-feature style (not clickable, no hover lift) ── */
   .goal-card {
     background: var(--card-bg);
     border-radius: var(--r-xxxl);
     padding: var(--sp-xxl);
     border: 1px solid var(--card-border);
     box-shadow: rgba(5, 0, 56, 0.06) 0px 4px 12px 0px;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     gap: 20px;
-  }
-
-  .goal-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(35, 64, 139, 0.4);
-    box-shadow: rgba(5, 0, 56, 0.12) 0px 12px 32px -4px;
+    position: relative;
   }
 
   .goal-card.completed {
     border-color: rgba(0, 180, 115, 0.2);
     background: rgba(0, 180, 115, 0.04);
   }
-  .goal-card.completed:hover {
-    border-color: rgba(0, 180, 115, 0.4);
-  }
 
+  /* ── Goal header ── */
   .goal-header {
     display: flex;
     justify-content: space-between;
@@ -71,16 +167,17 @@
   }
 
   .goal-text {
-    color: #ffffff;
-    font-size: 17px;
+    color: var(--ink);
+    font-size: 16px;
     font-weight: 600;
     margin: 0;
-    line-height: 1.45;
+    line-height: 1.5;
+    flex: 1;
   }
 
-  /* Pill status badges — DESIGN.md badge style */
+  /* ── Pill status badges — DESIGN.md badge style ── */
   .status-badge {
-    padding: 4px 12px;
+    padding: 4px 10px;
     border-radius: var(--r-full);
     font-size: 11px;
     font-weight: 600;
@@ -88,27 +185,45 @@
     letter-spacing: 0.5px;
     white-space: nowrap;
     flex-shrink: 0;
+    line-height: 1.4;
   }
-
   .status-badge.active {
-    background: rgba(35, 64, 139, 0.2);
+    background: rgba(75, 124, 243, 0.15);
     color: var(--accent);
-    border: 1px solid rgba(35, 64, 139, 0.4);
+    border: 1px solid rgba(75, 124, 243, 0.3);
   }
-
-  .status-badge.completed {
+  .status-badge.done {
     background: rgba(0, 180, 115, 0.15);
     color: #00d98b;
     border: 1px solid rgba(0, 180, 115, 0.3);
   }
 
-  /* Progress section */
+  /* ── Goal body / target display ── */
+  .goal-target {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.4;
+  }
+  .goal-target i {
+    font-size: 14px;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .goal-target strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ── Progress section (minute goals only) ── */
   .progress-section {
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
-
   .progress-labels {
     display: flex;
     justify-content: space-between;
@@ -116,31 +231,12 @@
     font-size: 13px;
     color: var(--ink-muted);
   }
-
   .progress-val {
-    color: #ffffff;
+    color: var(--ink);
     font-weight: 600;
   }
 
-  .progress-track {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: var(--r-full);
-    overflow: hidden;
-  }
-
-  .progress-bar {
-    height: 100%;
-    border-radius: var(--r-full);
-    background: linear-gradient(90deg, var(--morgan-blue), #4b7cf3);
-    transition: width 0.5s ease;
-  }
-
-  .goal-card.completed .progress-bar {
-    background: linear-gradient(90deg, #00b473, #33d99a);
-  }
-
-  /* Goal footer */
+  /* ── Goal footer ── */
   .goal-footer {
     display: flex;
     justify-content: space-between;
@@ -148,122 +244,707 @@
     font-size: 12px;
     color: var(--ink-soft);
     border-top: 1px solid var(--hairline);
-    padding-top: 12px;
+    padding-top: 14px;
   }
-
   .date-item {
     display: flex;
     align-items: center;
     gap: 5px;
   }
 
-  /* Empty state */
+  /* ── Delete button ── */
+  .delete-goal-btn {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--r-md);
+    transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    line-height: 1;
+  }
+  .delete-goal-btn:hover {
+    color: var(--error);
+    background: rgba(255, 107, 107, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* ── Edit button ── */
+  .edit-goal-btn {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--r-md);
+    transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    line-height: 1;
+  }
+  .edit-goal-btn:hover {
+    color: var(--accent);
+    background: rgba(75, 124, 243, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* ── Empty state ── */
   .no-goals {
     text-align: center;
-    padding: 72px 20px;
+    padding: 64px 24px;
     color: var(--ink-muted);
     background: var(--card-bg);
     border-radius: var(--r-xxxl);
     border: 1px solid var(--card-border);
   }
-
   .no-goals i {
-    font-size: 48px;
-    color: var(--morgan-blue);
-    margin-bottom: 16px;
-    opacity: 0.7;
+    font-size: 44px;
+    color: var(--accent);
+    margin-bottom: 14px;
+    opacity: 0.6;
     display: block;
   }
-
-  /* Confetti */
-  @keyframes confetti-fall {
-    0%   { transform: translateY(-100vh) rotateZ(0deg);   opacity: 1; }
-    100% { transform: translateY(100vh)  rotateZ(720deg); opacity: 0; }
+  .no-goals p {
+    font-size: 15px;
+    margin: 0;
+    line-height: 1.5;
   }
 
-  .confetti {
+  /* ── Modal overlay ── */
+  .modal-overlay {
     position: fixed;
-    width: 10px;
-    height: 10px;
-    pointer-events: none;
-    animation: confetti-fall 3s ease-in forwards;
-    z-index: 9999;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .modal-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-xxl);
+    padding: var(--sp-xxl);
+    width: 100%;
+    max-width: 480px;
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 16px 48px -8px;
+    animation: modalSlideUp 0.2s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  @keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    letter-spacing: -0.3px;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--r-sm);
+    transition: color 0.15s ease, transform 0.15s ease;
+    line-height: 1;
+  }
+  .modal-close:hover {
+    color: var(--ink);
+    transform: translateY(-2px);
+  }
+
+  /* ── Form styles ── */
+  .form-group {
+    margin-bottom: 18px;
+  }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.2px;
+  }
+  .form-input,
+  .form-select {
+    width: 100%;
+    background: var(--card-bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 10px 14px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-md);
+    outline: none;
+    transition: border-color 0.15s ease;
+    -webkit-appearance: none;
+  }
+  .form-input:focus,
+  .form-select:focus {
+    border-color: var(--accent);
+  }
+  .form-input::placeholder {
+    color: var(--ink-soft);
+  }
+
+  /* Type selector pills inside modal */
+  .type-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .type-option {
+    flex: 1;
+    min-width: 0;
+  }
+  .type-option input[type="radio"] {
+    display: none;
+  }
+  .type-option label {
+    display: block;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    padding: 9px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-full);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .type-option input[type="radio"]:checked + label {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+    font-weight: 600;
+  }
+  .type-option label:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  /* Submit button — button-primary */
+  .submit-btn {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bg);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    padding: 13px 24px;
+    border-radius: var(--r-full);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    margin-top: 6px;
+  }
+  .submit-btn:hover {
+    background: #d4d4d4;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.08);
+  }
+
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .goals-grid {
+      grid-template-columns: 1fr;
+    }
+    .goal-card {
+      padding: var(--sp-xl);
+      border-radius: var(--r-xxl);
+    }
   }
 </style>
 
 <div class="goals-container">
+
+  <!-- Page header + Create button -->
   <div class="page-header">
-    <h1 class="page-title">🎯 My Assignments</h1>
-    <p class="page-subtitle">Track your reading milestones and progress</p>
+    <div class="page-header-text">
+      <h1 class="page-title">My Goals</h1>
+      <p class="page-subtitle">Create personal reading goals and track your progress</p>
+    </div>
+    <button class="create-goal-btn" id="open-create-modal">
+      <i class="fa fa-plus"></i> New Goal
+    </button>
   </div>
 
-  {% if goals %}
-    <div class="goals-grid">
-      {% for goal in goals %}
-        {% set pct = (goal.complete_mins / goal.target * 100) | round | int %}
-        {% if pct > 100 %}{% set pct = 100 %}{% endif %}
-        {% set is_completed = goal.complete_mins >= goal.target %}
+  <!-- Tab pills -->
+  <div class="goal-tabs">
+    <button class="goal-tab active" data-tab="minutes">
+      Reading Time
+      <span class="tab-count">{{ minute_goal_stats | length }}</span>
+    </button>
+    <button class="goal-tab" data-tab="recommended">
+      Recommended Books
+      <span class="tab-count">{{ recommendation_goal_stats | length }}</span>
+    </button>
+    <button class="goal-tab" data-tab="specific">
+      Specific Books
+      <span class="tab-count">{{ unique_goal_stats | length }}</span>
+    </button>
+  </div>
 
-        <div class="goal-card {% if is_completed %}completed{% endif %}">
-          <div class="goal-header">
-            <p class="goal-text">{{ goal.goal_desc }}</p>
-            <span class="status-badge {% if is_completed %}completed{% else %}active{% endif %}">
-              {% if is_completed %}🏆 Done{% else %}⚡ Active{% endif %}
-            </span>
-          </div>
+  <!-- ═══ READING TIME GOALS ═══ -->
+  <div class="goal-section visible" data-section="minutes">
+    {% if minute_goal_stats %}
+      <p class="section-heading">Read a target number of minutes before the due date</p>
+      <div class="goals-grid">
+        {% for goal in minute_goal_stats %}
+          <div class="goal-card {% if goal.done %}completed{% endif %}">
+            <div class="goal-header">
+              <p class="goal-text">{{ goal.desc }}</p>
+              <span class="status-badge {% if goal.done %}done{% else %}active{% endif %}">
+                {% if goal.done %}Done{% else %}Active{% endif %}
+              </span>
+            </div>
 
-          <div class="progress-section">
-            <div class="progress-labels">
-              <span>Progress</span>
-              <span class="progress-val">{{ goal.complete_mins }} / {{ goal.target }} mins ({{ pct }}%)</span>
-            </div>
-            <div class="progress-track">
-              <div class="progress-bar" style="width: {{ pct }}%;"></div>
-            </div>
-          </div>
-
-          <div class="goal-footer">
-            <div class="date-item">
-              <i class="fa fa-calendar-check-o"></i>
-              <span>Due: {{ goal.due.split(' ')[0] }}</span>
-            </div>
-            <div class="date-item">
+            <div class="goal-target">
               <i class="fa fa-clock-o"></i>
-              <span>Created: {{ goal.creation_date.split(' ')[0] }}</span>
+              <span>Target: <strong>{{ goal.target }} minutes</strong></span>
             </div>
+
+            <div class="goal-footer">
+              <div class="date-item">
+                <i class="fa fa-calendar"></i>
+                <span>Due: {{ goal.due_date.strftime('%b %d, %Y') if goal.due_date is not string else goal.due_date }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <button class="edit-goal-btn" data-id="{{ goal.id }}" data-text="{{ goal.desc }}" data-target="{{ goal.target }}" data-type="minutes" data-due="{{ goal.due_date.strftime('%Y-%m-%dT%H:%M') if goal.due_date is not string else goal.due_date }}" title="Edit goal">
+                  <i class="fa fa-pencil"></i>
+                </button>
+                <button class="delete-goal-btn" data-id="{{ goal.id }}" title="Delete goal">
+                  <i class="fa fa-trash-o"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="no-goals">
+        <i class="fa fa-clock-o"></i>
+        <p>No reading time goals yet. Create one to start tracking your minutes!</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══ RECOMMENDED BOOK GOALS ═══ -->
+  <div class="goal-section" data-section="recommended">
+    {% if recommendation_goal_stats %}
+      <p class="section-heading">Read a book from your AI-powered recommendations</p>
+      <div class="goals-grid">
+        {% for goal in recommendation_goal_stats %}
+          <div class="goal-card {% if goal.done %}completed{% endif %}">
+            <div class="goal-header">
+              <p class="goal-text">{{ goal.desc }}</p>
+              <span class="status-badge {% if goal.done %}done{% else %}active{% endif %}">
+                {% if goal.done %}Done{% else %}Active{% endif %}
+              </span>
+            </div>
+
+            <div class="goal-target">
+              <i class="fa fa-book"></i>
+              <span>Book: <strong>{{ goal.target }}</strong></span>
+            </div>
+
+            <div class="goal-footer">
+              <div class="date-item">
+                <i class="fa fa-calendar"></i>
+                <span>Due: {{ goal.due_date.strftime('%b %d, %Y') if goal.due_date is not string else goal.due_date }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <button class="edit-goal-btn" data-id="{{ goal.id }}" data-text="{{ goal.desc }}" data-target="{{ goal.target }}" data-type="recommended" data-due="{{ goal.due_date.strftime('%Y-%m-%dT%H:%M') if goal.due_date is not string else goal.due_date }}" title="Edit goal">
+                  <i class="fa fa-pencil"></i>
+                </button>
+                <button class="delete-goal-btn" data-id="{{ goal.id }}" title="Delete goal">
+                  <i class="fa fa-trash-o"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="no-goals">
+        <i class="fa fa-bookmark"></i>
+        <p>No recommended book goals yet. Pick a book from your recommendations to challenge yourself!</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══ SPECIFIC BOOK GOALS ═══ -->
+  <div class="goal-section" data-section="specific">
+    {% if unique_goal_stats %}
+      <p class="section-heading">Read a specific book you have in mind</p>
+      <div class="goals-grid">
+        {% for goal in unique_goal_stats %}
+          <div class="goal-card {% if goal.done %}completed{% endif %}">
+            <div class="goal-header">
+              <p class="goal-text">{{ goal.desc }}</p>
+              <span class="status-badge {% if goal.done %}done{% else %}active{% endif %}">
+                {% if goal.done %}Done{% else %}Active{% endif %}
+              </span>
+            </div>
+
+            <div class="goal-target">
+              <i class="fa fa-bookmark-o"></i>
+              <span>Book: <strong>{{ goal.target }}</strong></span>
+            </div>
+
+            <div class="goal-footer">
+              <div class="date-item">
+                <i class="fa fa-calendar"></i>
+                <span>Due: {{ goal.due_date.strftime('%b %d, %Y') if goal.due_date is not string else goal.due_date }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <button class="edit-goal-btn" data-id="{{ goal.id }}" data-text="{{ goal.desc }}" data-target="{{ goal.target }}" data-type="specific" data-due="{{ goal.due_date.strftime('%Y-%m-%dT%H:%M') if goal.due_date is not string else goal.due_date }}" title="Edit goal">
+                  <i class="fa fa-pencil"></i>
+                </button>
+                <button class="delete-goal-btn" data-id="{{ goal.id }}" title="Delete goal">
+                  <i class="fa fa-trash-o"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="no-goals">
+        <i class="fa fa-book"></i>
+        <p>No specific book goals yet. Set a goal to read a book you've been meaning to pick up!</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ═══ CREATE GOAL MODAL ═══ -->
+<div class="modal-overlay" id="create-modal" hidden>
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title">Create a Goal</h2>
+      <button class="modal-close" id="close-create-modal">✕</button>
+    </div>
+
+    <form action="/admin" method="POST" id="goal-form">
+      <!-- Goal type selector -->
+      <div class="form-group">
+        <label class="form-label">Goal Type</label>
+        <div class="type-selector">
+          <div class="type-option">
+            <input type="radio" name="tyep" value="minutes" id="type-minutes" checked>
+            <label for="type-minutes">Minutes</label>
+          </div>
+          <div class="type-option">
+            <input type="radio" name="tyep" value="recommended" id="type-recommended">
+            <label for="type-recommended">Rec. Book</label>
+          </div>
+          <div class="type-option">
+            <input type="radio" name="tyep" value="specific" id="type-specific">
+            <label for="type-specific">Specific Book</label>
           </div>
         </div>
-      {% endfor %}
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label class="form-label" for="goal_text">Description</label>
+        <input class="form-input" type="text" name="goal_text" id="goal_text" placeholder="e.g. Read 200 minutes this week" required minlength="5">
+      </div>
+
+      <!-- Target: minutes (default visible) -->
+      <div class="form-group" id="target-minutes-group">
+        <label class="form-label" for="target-minutes-input">Target Minutes</label>
+        <input class="form-input" type="number" name="target" id="target-minutes-input" placeholder="e.g. 200" min="1">
+      </div>
+
+      <!-- Target: recommended book (hidden) -->
+      <div class="form-group" id="target-recommended-group" hidden>
+        <label class="form-label" for="target-recommended-input">Select a Recommended Book</label>
+        <select class="form-select" name="" id="target-recommended-input">
+          <option value="" disabled selected>Choose a book…</option>
+          {% for book in rec_books %}
+            <option value="{{ book }}">{{ book }}</option>
+          {% endfor %}
+          {% if not rec_books %}
+            <option value="" disabled>No recommendations yet — log some reads first!</option>
+          {% endif %}
+        </select>
+      </div>
+
+      <!-- Target: specific book (hidden) -->
+      <div class="form-group" id="target-specific-group" hidden>
+        <label class="form-label" for="target-specific-input">Book Title</label>
+        <input class="form-input" type="text" name="" id="target-specific-input" placeholder="e.g. The Great Gatsby">
+      </div>
+
+      <!-- Due date -->
+      <div class="form-group">
+        <label class="form-label" for="due_date">Due Date</label>
+        <input class="form-input" type="datetime-local" name="due_date" id="due_date" required>
+      </div>
+
+      <button type="submit" class="submit-btn">Create Goal</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ EDIT GOAL MODAL ═══ -->
+<div class="modal-overlay" id="edit-modal" hidden>
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title">Edit Goal</h2>
+      <button class="modal-close" id="close-edit-modal">✕</button>
     </div>
-  {% else %}
-    <div class="no-goals">
-      <i class="fa fa-trophy"></i>
-      <p style="font-size: 16px; margin: 0;">No active reading assignments found. Keep logging your reads!</p>
-    </div>
-  {% endif %}
+
+    <form action="/admin/goal/edit" method="POST" id="edit-goal-form">
+      <input type="hidden" name="goal-id" id="edit-goal-id">
+      <!-- Goal type selector -->
+      <div class="form-group">
+        <label class="form-label">Goal Type</label>
+        <div class="type-selector">
+          <div class="type-option">
+            <input type="radio" name="tyep" value="minutes" id="edit-type-minutes" checked>
+            <label for="edit-type-minutes">Minutes</label>
+          </div>
+          <div class="type-option">
+            <input type="radio" name="tyep" value="recommended" id="edit-type-recommended">
+            <label for="edit-type-recommended">Rec. Book</label>
+          </div>
+          <div class="type-option">
+            <input type="radio" name="tyep" value="specific" id="edit-type-specific">
+            <label for="edit-type-specific">Specific Book</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label class="form-label" for="edit_goal_text">Description</label>
+        <input class="form-input" type="text" name="goal_text" id="edit_goal_text" placeholder="e.g. Read 200 minutes this week" required minlength="5">
+      </div>
+
+      <!-- Target: minutes -->
+      <div class="form-group" id="edit-target-minutes-group">
+        <label class="form-label" for="edit-target-minutes-input">Target Minutes</label>
+        <input class="form-input" type="number" name="target" id="edit-target-minutes-input" placeholder="e.g. 200" min="1">
+      </div>
+
+      <!-- Target: recommended book -->
+      <div class="form-group" id="edit-target-recommended-group" hidden>
+        <label class="form-label" for="edit-target-recommended-input">Select a Recommended Book</label>
+        <select class="form-select" name="" id="edit-target-recommended-input">
+          <option value="" disabled selected>Choose a book…</option>
+          {% for book in rec_books %}
+            <option value="{{ book }}">{{ book }}</option>
+          {% endfor %}
+          {% if not rec_books %}
+            <option value="" disabled>No recommendations yet — log some reads first!</option>
+          {% endif %}
+        </select>
+      </div>
+
+      <!-- Target: specific book -->
+      <div class="form-group" id="edit-target-specific-group" hidden>
+        <label class="form-label" for="edit-target-specific-input">Book Title</label>
+        <input class="form-input" type="text" name="" id="edit-target-specific-input" placeholder="e.g. The Great Gatsby">
+      </div>
+
+      <!-- Due date -->
+      <div class="form-group">
+        <label class="form-label" for="edit_due_date">Due Date</label>
+        <input class="form-input" type="datetime-local" name="due_date" id="edit_due_date" required>
+      </div>
+
+      <button type="submit" class="submit-btn">Save Changes</button>
+    </form>
+  </div>
 </div>
 
 <script>
-  function createConfetti() {
-    const colors = ['#23408b', '#4b7cf3', '#00b473', '#33d99a', '#a5b4fc'];
-    const confettiCount = 60;
-    for (let i = 0; i < confettiCount; i++) {
-      const confetti = document.createElement('div');
-      confetti.className = 'confetti';
-      confetti.style.left = Math.random() * 100 + 'vw';
-      confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-      confetti.style.animationDelay = (Math.random() * 0.4) + 's';
-      confetti.style.animationDuration = (2.2 + Math.random() * 1.2) + 's';
-      document.body.appendChild(confetti);
-      setTimeout(() => confetti.remove(), 3800);
+  // ── Tab switching ──
+  const tabs = document.querySelectorAll('.goal-tab');
+  const sections = document.querySelectorAll('.goal-section');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-tab');
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      sections.forEach(s => {
+        s.classList.toggle('visible', s.getAttribute('data-section') === target);
+      });
+    });
+  });
+
+  // ── Modal open/close (Create) ──
+  const createModal = document.getElementById('create-modal');
+  document.getElementById('open-create-modal').addEventListener('click', () => {
+    createModal.removeAttribute('hidden');
+  });
+  document.getElementById('close-create-modal').addEventListener('click', () => {
+    createModal.setAttribute('hidden', '');
+  });
+  createModal.addEventListener('click', (e) => {
+    if (e.target === createModal) createModal.setAttribute('hidden', '');
+  });
+
+  // ── Goal type switcher (Create Form) ──
+  const typeRadios = document.querySelectorAll('#create-modal input[name="tyep"]');
+  const minutesGroup = document.getElementById('target-minutes-group');
+  const recGroup = document.getElementById('target-recommended-group');
+  const specGroup = document.getElementById('target-specific-group');
+  const minutesInput = document.getElementById('target-minutes-input');
+  const recInput = document.getElementById('target-recommended-input');
+  const specInput = document.getElementById('target-specific-input');
+
+  function syncTargetFields() {
+    const selected = document.querySelector('#create-modal input[name="tyep"]:checked').value;
+
+    minutesGroup.hidden = true;
+    recGroup.hidden = true;
+    specGroup.hidden = true;
+
+    minutesInput.removeAttribute('name');
+    recInput.removeAttribute('name');
+    specInput.removeAttribute('name');
+
+    if (selected === 'minutes') {
+      minutesGroup.hidden = false;
+      minutesInput.setAttribute('name', 'target');
+    } else if (selected === 'recommended') {
+      recGroup.hidden = false;
+      recInput.setAttribute('name', 'target');
+    } else {
+      specGroup.hidden = false;
+      specInput.setAttribute('name', 'target');
     }
   }
 
-  window.addEventListener('load', function() {
-    const completedCards = document.querySelectorAll('.goal-card.completed');
-    if (completedCards.length > 0) {
-      setTimeout(() => createConfetti(), 400);
-    }
+  typeRadios.forEach(r => r.addEventListener('change', syncTargetFields));
+  syncTargetFields(); // init
+
+  // ── Modal open/close (Edit) ──
+  const editModal = document.getElementById('edit-modal');
+  document.getElementById('close-edit-modal').addEventListener('click', () => {
+    editModal.setAttribute('hidden', '');
   });
+  editModal.addEventListener('click', (e) => {
+    if (e.target === editModal) editModal.setAttribute('hidden', '');
+  });
+
+  // ── Goal type switcher (Edit Form) ──
+  const editTypeRadios = document.querySelectorAll('#edit-modal input[name="tyep"]');
+  const editMinutesGroup = document.getElementById('edit-target-minutes-group');
+  const editRecGroup = document.getElementById('edit-target-recommended-group');
+  const editSpecGroup = document.getElementById('edit-target-specific-group');
+  const editMinutesInput = document.getElementById('edit-target-minutes-input');
+  const editRecInput = document.getElementById('edit-target-recommended-input');
+  const editSpecInput = document.getElementById('edit-target-specific-input');
+
+  function syncEditTargetFields() {
+    const selected = document.querySelector('#edit-modal input[name="tyep"]:checked').value;
+
+    editMinutesGroup.hidden = true;
+    editRecGroup.hidden = true;
+    editSpecGroup.hidden = true;
+
+    editMinutesInput.removeAttribute('name');
+    editRecInput.removeAttribute('name');
+    editSpecInput.removeAttribute('name');
+
+    if (selected === 'minutes') {
+      editMinutesGroup.hidden = false;
+      editMinutesInput.setAttribute('name', 'target');
+    } else if (selected === 'recommended') {
+      editRecGroup.hidden = false;
+      editRecInput.setAttribute('name', 'target');
+    } else {
+      editSpecGroup.hidden = false;
+      editSpecInput.setAttribute('name', 'target');
+    }
+  }
+
+  editTypeRadios.forEach(r => r.addEventListener('change', syncEditTargetFields));
+
+  document.querySelectorAll('.edit-goal-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const goalId = btn.getAttribute('data-id');
+      const text = btn.getAttribute('data-text');
+      const targetVal = btn.getAttribute('data-target');
+      const typeVal = btn.getAttribute('data-type');
+      const dueVal = btn.getAttribute('data-due');
+
+      document.getElementById('edit-goal-id').value = goalId || '';
+      document.getElementById('edit_goal_text').value = text || '';
+      document.getElementById('edit_due_date').value = dueVal || '';
+
+      const radioToSelect = document.querySelector(`#edit-modal input[name="tyep"][value="${typeVal}"]`);
+      if (radioToSelect) radioToSelect.checked = true;
+      syncEditTargetFields();
+
+      if (typeVal === 'minutes') {
+        editMinutesInput.value = targetVal || '';
+      } else if (typeVal === 'recommended') {
+        editRecInput.value = targetVal || '';
+      } else {
+        editSpecInput.value = targetVal || '';
+      }
+
+      editModal.removeAttribute('hidden');
+    });
+  });
+
+  // ── Delete goal ──
+  document.querySelectorAll('.delete-goal-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const goalId = btn.getAttribute('data-id');
+      if (!confirm('Delete this goal?')) return;
+
+      fetch(`/admin/goals/delete/${goalId}`, { method: 'DELETE' })
+        .then(res => {
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            res.json().then(err => alert('Error deleting goal: ' + (err.error || 'Failed')));
+          }
+        })
+        .catch(err => console.error('Error deleting goal:', err));
+    });
+  });
+
 </script>
 {% endblock %}
