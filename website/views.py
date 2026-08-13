@@ -56,32 +56,39 @@ def save_data():
         if minutes <= 0:
             raise ValueError()
         if minutes > 360:
-            flash('Please be honest with the minutes you input', category='error')
-            return jsonify({"error": "minutes too high"}), 400
+            return jsonify({"error": "Please be honest with the minutes you input"}), 400
     except Exception:
         return jsonify({"error": "Only numbers are allowed to be input for minutes"}), 400
     
     # reward
     coins_to_add = 4
-    for log in current_user.log_readings:
-        if log.title.lower().strip() == title.lower().strip():
-            coins_to_add = 2
-                                
+    if len(current_user.log_readings) > 0:
+        for log in current_user.log_readings:
+            if log.title.lower().strip() == title.lower().strip():
+                coins_to_add = 2
+                                    
+            coins_to_add += math.floor(minutes/10)
+
+    else:
         coins_to_add += math.floor(minutes/10)
-        # add coins to account
-        if len(current_user.log_readings) > 0:
-            recent_log = current_user.log_readings[-1]
-            recent_log_id = recent_log.id
-        else:
-            recent_log_id = 0
-        send_coins('log', recent_log_id, coins_to_add, current_user.id)
+    
     new_log = Log_reading(genre=genre or 'Unknown', author=author, reading_time=minutes, user_id=current_user.id, title=title)
     db.session.add(new_log)
     db.session.commit()
 
-    current_user.current_streak += 1
-    current_user.last_activity_date = date.today()
-    db.session.commit()
+
+    
+    recent_log = current_user.log_readings[-1]
+    log_id = recent_log.id
+    send_coins('log', log_id, coins_to_add, current_user.id)
+
+    streak = get_reading_streak(current_user.id)
+    today = date.today()
+    if current_user.last_activity_date != today:
+        current_user.current_streak = streak
+        current_user.last_activity_date = date.today()
+        db.session.commit()
+        
 
     flash(f'Reading Logged, {coins_to_add} coins added to wallet!', category='success')
     return jsonify({"status": "success"}), 200
@@ -229,36 +236,34 @@ def home():
                 return redirect(url_for('views.home'))
             # reward
             coins_to_add = 4
-            for log in current_user.log_readings:
-                if log.title.lower().strip() == title.lower().strip():
-                    coins_to_add = 2
-                                
-            coins_to_add += math.floor(minutes/10)
-            # add coins to account
             if len(current_user.log_readings) > 0:
-                recent_log = current_user.log_readings[-1]
-                recent_log_id = recent_log.id
+                for log in current_user.log_readings:
+                    if log.title.lower().strip() == title.lower().strip():
+                        coins_to_add = 2
+                    coins_to_add += math.floor(minutes/10)
             else:
-                recent_log_id = 0
-            send_coins('log', recent_log_id, coins_to_add, current_user.id)
-            
-
-            
+                coins_to_add += math.floor(minutes/10)
+                
             new_log = Log_reading(genre=genre or 'Unknown', author=author, reading_time=minutes, user_id=current_user.id, title=title)
             db.session.add(new_log)
             db.session.commit()
 
+            recent_log = current_user.log_readings[-1]
+            log_id = recent_log.id
+            send_coins('log', log_id, coins_to_add, current_user.id)
 
-            current_user.current_streak += 1
-            current_user.last_activity_date = date.today()
-            db.session.commit()
+
 
             flash(f'Reading Logged, {coins_to_add} coins added to wallet!', category='success')
             return redirect(url_for('views.home'))
+    streak = get_reading_streak(current_user.id)
+    today = date.today()
+    current_user.current_streak = streak
+    current_user.last_activity_date = date.today()
+    db.session.commit()
 
-    # show user's logs (optional)
     logs = Log_reading.query.filter_by(user_id=current_user.id).all()
-    return render_template("home.html", user=current_user, logs=logs)
+    return render_template("home.html", user=current_user, logs=logs, streak=streak)
 
 @views.route('/achievement', methods=['GET'])
 @login_required
