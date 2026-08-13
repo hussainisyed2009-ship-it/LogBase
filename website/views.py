@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, flash, json, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from datetime import datetime, timedelta, timezone
-from .models import Log_reading, User, Recommend, goals, background_info, ny_times_best_sellers
+from datetime import datetime, timedelta, timezone, date
+from .models import Log_reading, User, Recommend, goals, background_info, ny_times_best_sellers, currency_logs
 from . import db
 import requests
 from .llm import call_LLM, get_cover
@@ -10,6 +10,8 @@ from .goals import getGoals, get_goals_student, match_book_goal
 import secrets
 import string
 from .best_sellers import get_best_sellers
+import math
+from .currency import send_coins
 
 views = Blueprint('views', __name__)
 
@@ -53,13 +55,35 @@ def save_data():
         minutes = int(time)
         if minutes <= 0:
             raise ValueError()
+        if minutes > 360:
+            flash('Please be honest with the minutes you input', category='error')
+            return jsonify({"error": "minutes too high"}), 400
     except Exception:
         return jsonify({"error": "Only numbers are allowed to be input for minutes"}), 400
     
+    # reward
+    coins_to_add = 4
+    for log in current_user.log_readings:
+        if log.title.lower().strip() == title.lower().strip():
+            coins_to_add = 2
+                                
+        coins_to_add += math.floor(minutes/10)
+        # add coins to account
+        if len(current_user.log_readings) > 0:
+            recent_log = current_user.log_readings[-1]
+            recent_log_id = recent_log.id
+        else:
+            recent_log_id = 0
+        send_coins('log', recent_log_id, coins_to_add, current_user.id)
     new_log = Log_reading(genre=genre or 'Unknown', author=author, reading_time=minutes, user_id=current_user.id, title=title)
     db.session.add(new_log)
     db.session.commit()
-    flash('Reading Logged', category='success')
+
+    current_user.current_streak += 1
+    current_user.last_activity_date = date.today()
+    db.session.commit()
+
+    flash(f'Reading Logged, {coins_to_add} coins added to wallet!', category='success')
     return jsonify({"status": "success"}), 200
 # getting book data from api
 @views.route("/api/book/<isbn>")
@@ -196,14 +220,40 @@ def home():
                 minutes = int(time)
                 if minutes <= 0:
                     raise ValueError()
+                if minutes > 360:
+                    flash('Please be honest with the amount of minutes you input', category='error')
+                    return redirect(url_for('views.home'))
+
             except Exception:
                 flash('Please provide a valid number of minutes', category='error')
-                return render_template("home.html", user=current_user)
+                return redirect(url_for('views.home'))
+            # reward
+            coins_to_add = 4
+            for log in current_user.log_readings:
+                if log.title.lower().strip() == title.lower().strip():
+                    coins_to_add = 2
+                                
+            coins_to_add += math.floor(minutes/10)
+            # add coins to account
+            if len(current_user.log_readings) > 0:
+                recent_log = current_user.log_readings[-1]
+                recent_log_id = recent_log.id
+            else:
+                recent_log_id = 0
+            send_coins('log', recent_log_id, coins_to_add, current_user.id)
+            
 
+            
             new_log = Log_reading(genre=genre or 'Unknown', author=author, reading_time=minutes, user_id=current_user.id, title=title)
             db.session.add(new_log)
             db.session.commit()
-            flash('Reading Logged', category='success')
+
+
+            current_user.current_streak += 1
+            current_user.last_activity_date = date.today()
+            db.session.commit()
+
+            flash(f'Reading Logged, {coins_to_add} coins added to wallet!', category='success')
             return redirect(url_for('views.home'))
 
     # show user's logs (optional)
@@ -353,6 +403,17 @@ def delete_log(log_id):
     if log and log.user_id == current_user.id:
         db.session.delete(log)
         db.session.commit()
+
+        currency = currency_logs.query.filter(currency_logs.where == 'log' and currency_logs.where_id == log.id).first()
+        if currency:
+            db.session.delete(currency)
+            db.session.commit()
+        else:
+            currency = currency_logs.query.filter(currency_logs.where == 'log' and currency_logs.where_id == 0).first()
+            if currency:
+                db.session.delete(currency)
+                db.session.commit()
+
         flash('Log deleted', category='success')
     return redirect(url_for('views.home'))
 

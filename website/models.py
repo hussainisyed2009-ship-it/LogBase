@@ -63,6 +63,7 @@ class weekly_goals(db.Model):
 
 class currency_logs(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     where = db.Column(db.String(50), nullable=False)
     where_id = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Integer, CheckConstraint('amount <= 500'), nullable=False)
