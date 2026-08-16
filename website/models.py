@@ -18,6 +18,7 @@ class User(db.Model, UserMixin):
     last_activity_date = db.Column(db.Date, nullable=True) # Date of last completed activity
     streak_freezes = db.Column(db.Integer, CheckConstraint('streak_freezes <= 5'), default=0)      # Number of freezes owned
     freeze_used_today = db.Column(db.Boolean, default=False) # used to make sure multiple streak freezes aren't used at once
+    date_freeze_used = db.Column(db.Date, nullable=True)
 
 class ny_times_best_sellers(db.Model):
     id = db.Column(db.Integer, primary_key=True)

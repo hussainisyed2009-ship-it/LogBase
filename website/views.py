@@ -194,15 +194,20 @@ def home():
     if background == None:
         return redirect(url_for('views.survey'))
 
+    if date.today() != current_user.date_freeze_used and current_user.freeze_used_today:
+        current_user.freeze_used_today = False
+        db.session.commit()
+
+
     """
     Check if streak should be broken
     """
     all_logs = current_user.log_readings
     if all_logs:
-        recent = all_logs[-1]
-        difference = (date.today() - recent.timestamp.date()).days
+        most_recent_date = max(log.timestamp for log in all_logs).date()
+        difference = (date.today() - most_recent_date).days
 
-        if difference > 1:
+        if difference > 1 and not current_user.freeze_used_today:
             current_user.last_streak = current_user.current_streak
             current_user.current_streak = 0
             db.session.commit()
@@ -278,7 +283,21 @@ def home():
 @views.route('/streak/restore', methods=['POST'])
 @login_required
 def restore_streak():
-    return redirect(url_for('home.html'))
+    if current_user.last_streak > 0:
+        if current_user.streak_freezes > 0:
+            current_user.current_streak = current_user.last_streak
+            current_user.last_streak = 0
+            current_user.streak_freezes -= 1
+            current_user.freeze_used_today = True
+            current_user.date_freeze_used = date.today()
+            db.session.commit()
+            flash("Streak restored successfully!", category='success')
+        else:
+            flash("You do not have any streak freezes available!", category='error')
+    else:
+        flash("Streak is still alive or no broken streak to restore!", category='error')
+        
+    return redirect(url_for('views.home'))
 
 
 @views.route('/achievement', methods=['GET'])
