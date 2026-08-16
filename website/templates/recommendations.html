@@ -15,7 +15,7 @@
     color: var(--ink-muted);
     text-align: center;
     font-size: 14px;
-    margin-bottom: 36px;
+    margin-bottom: 28px;
   }
 
   /* Book grid */
@@ -37,19 +37,12 @@
     text-align: center;
     border: 1px solid var(--card-border);
     box-shadow: rgba(5, 0, 56, 0.06) 0px 4px 12px 0px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
     flex: 0 0 auto;
     width: 210px;
-  }
-
-  .book-card:hover {
-    transform: translateY(-6px);
-    box-shadow: rgba(5, 0, 56, 0.14) 0px 14px 36px -4px;
-    border-color: rgba(35, 64, 139, 0.4);
   }
 
   /* Cover wrapper */
@@ -108,7 +101,7 @@
   /* Loading spinner */
   .loading-section {
     text-align: center;
-    padding: 80px 20px;
+    padding: 40px 20px 60px 20px;
   }
 
   .spinner {
@@ -149,185 +142,14 @@
   /* Empty state */
   .no-data {
     text-align: center;
-    padding: 72px 20px;
+    padding: 48px 20px;
     color: var(--ink-muted);
     font-size: 16px;
     max-width: 500px;
     margin: 0 auto;
   }
 
-  @media (max-width: 768px) {
-    .page-title { font-size: 26px; }
-    .books-container { gap: 16px; }
-  }
-</style>
-
-<h1 class="page-title">Recommended For You</h1>
-<p class="page-subtitle">Personalised picks based on your reading history</p>
-
-{% if loading %}
-  <div id="loading-section" class="loading-section">
-    <div class="spinner"></div>
-    <p class="loading-text">Finding your next great read…</p>
-    <p class="loading-sub">Our AI is personalising your list, this may take a few seconds.</p>
-  </div>
-
-  <div id="error-section" class="error-section">
-    <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
-    <p id="error-message">Something went wrong. Please try refreshing the page.</p>
-  </div>
-
-  <div id="books-container" class="books-container" style="display: none;"></div>
-
-  <script>
-    fetch('/api/fetch-recommendations')
-      .then(function(res) {
-        return res.json().then(function(data) {
-          return { status: res.status, body: data };
-        });
-      })
-      .then(function(result) {
-        document.getElementById('loading-section').style.display = 'none';
-
-        if (result.status !== 200 || result.body.error) {
-          var errSection = document.getElementById('error-section');
-          errSection.style.display = 'block';
-          if (result.body.error) {
-            document.getElementById('error-message').textContent = result.body.error;
-          }
-          return;
-        }
-
-        var books = result.body;
-        var container = document.getElementById('books-container');
-        container.style.display = 'flex';
-
-        books.forEach(function(book) {
-          var imageUrl = book.image_url || '';
-
-          var card = document.createElement('div');
-          card.className = 'book-card';
-
-          var coverHtml = '';
-          if (imageUrl) {
-            coverHtml =
-              '<div class="cover-wrapper">' +
-                '<div class="book-cover-fallback">📚</div>' +
-                '<img class="book-cover" src="' + imageUrl + '" alt="' + book.title + ' cover" ' +
-                  'onerror="this.style.display=\'none\'">' +
-              '</div>';
-          } else {
-            coverHtml = '<div class="cover-wrapper"><div class="book-cover-fallback">📚</div></div>';
-          }
-
-          card.innerHTML =
-            coverHtml +
-            '<p class="book-title">' + book.title + '</p>' +
-            '<p class="book-author">' + book.author + '</p>' +
-            '<p class="book-date">' + (book.date_written || '') + '</p>';
-
-          container.appendChild(card);
-
-          if (imageUrl) {
-            var img = card.querySelector('.book-cover');
-            setTimeout(function() {
-              if (!img.complete || img.naturalWidth === 0) {
-                img.style.display = 'none';
-              }
-            }, 9000);
-          }
-        });
-      })
-      .catch(function(err) {
-        document.getElementById('loading-section').style.display = 'none';
-        document.getElementById('error-section').style.display = 'block';
-      });
-  </script>
-
-{% elif recommendations %}
-  <div class="books-container">
-    {% for book in recommendations %}
-      <div class="book-card">
-        <div class="cover-wrapper">
-          <div class="book-cover-fallback">📚</div>
-          {% if book.image_url %}
-            <img
-              class="book-cover"
-              src="{{ book.image_url }}"
-              alt="{{ book.title }} cover"
-              onerror="this.style.display='none';"
-            >
-          {% endif %}
-        </div>
-        <p class="book-title">{{ book.title }}</p>
-        <p class="book-author">{{ book.author }}</p>
-        <p class="book-date">{{ book.date_written }}</p>
-      </div>
-    {% endfor %}
-  </div>
-
-  <script>
-    document.querySelectorAll('.book-cover').forEach(function(img) {
-      setTimeout(function() {
-        if (!img.complete || img.naturalWidth === 0) {
-          img.style.display = 'none';
-        }
-      }, 6000);
-    });
-  </script>
-
-{% else %}
-  <div class="no-data">
-    <div style="font-size: 48px; margin-bottom: 16px;">📚</div>
-    <p>No recommendations yet! Log some books first and we'll suggest what to read next.</p>
-  </div>
-{% endif %}
-
-{% if best_sellers %}
-  <!-- Section Divider -->
-  <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
-    <hr style="border: none; height: 1px; background: var(--hairline); margin: 0 0 40px 0;">
-  </div>
-
-  <!-- NY Times Best Sellers Header -->
-  <h2 class="nyt-section-title">NY Times Best Sellers Of The Week</h2>
-
-  <!-- Horizontal scroll row -->
-  <div class="nyt-scroll-wrapper">
-    <div class="nyt-scroll-row">
-      {% for book in best_sellers.data %}
-        <div class="nyt-card">
-          <div class="nyt-rank">#{{ book.id }}</div>
-          <div class="cover-wrapper">
-            <div class="book-cover-fallback" style="font-size: 14px; color: var(--ink-muted);">No Cover</div>
-            {% if book.cover %}
-              <img
-                class="book-cover"
-                src="{{ book.cover }}"
-                alt="{{ book.title }} cover"
-                onerror="this.style.display='none';"
-              >
-            {% endif %}
-          </div>
-          <p class="book-title">{{ book.title }}</p>
-          <p class="book-author">{{ book.author }}</p>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-{% endif %}
-
-<style>
-  /* ── NY Times Best Sellers Section ── */
-  .nyt-section-title {
-    color: #ffffff;
-    text-align: center;
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    margin: 0 0 28px 0;
-  }
-
+  /* NY Times Best Sellers Section */
   .nyt-scroll-wrapper {
     max-width: 1200px;
     margin: 0 auto;
@@ -336,7 +158,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Hide scrollbar but keep scroll functionality */
   .nyt-scroll-wrapper::-webkit-scrollbar {
     height: 6px;
   }
@@ -377,10 +198,178 @@
   }
 
   @media (max-width: 768px) {
-    .nyt-section-title { font-size: 20px; }
+    .page-title { font-size: 26px; }
+    .books-container { gap: 16px; }
     .nyt-scroll-row { gap: 14px; }
     .nyt-card { width: 160px; padding: 16px 12px; }
   }
 </style>
+
+<!-- AI Personalized Recommendations Section (Top) -->
+<h1 class="page-title">Recommended For You</h1>
+<p class="page-subtitle">Personalised picks based on your reading history</p>
+
+{% if loading %}
+    <div id="loading-section" class="loading-section">
+      <div class="spinner"></div>
+      <p class="loading-text">Finding your next great read…</p>
+      <p class="loading-sub">Our AI is personalising your list, this may take a few seconds.</p>
+    </div>
+
+    <div id="error-section" class="error-section">
+      <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
+      <p id="error-message">Something went wrong. Please try refreshing the page.</p>
+    </div>
+
+    <div id="books-container" class="books-container" style="display: none;"></div>
+
+    <script>
+      fetch('/api/fetch-recommendations')
+        .then(function(res) {
+          return res.json().then(function(data) {
+            return { status: res.status, body: data };
+          });
+        })
+        .then(function(result) {
+          document.getElementById('loading-section').style.display = 'none';
+
+          if (result.status !== 200 || result.body.error) {
+            var errSection = document.getElementById('error-section');
+            errSection.style.display = 'block';
+            if (result.body.error) {
+              document.getElementById('error-message').textContent = result.body.error;
+            }
+            return;
+          }
+
+          var books = result.body;
+          var container = document.getElementById('books-container');
+          container.style.display = 'flex';
+
+          books.forEach(function(book) {
+            var card = document.createElement('div');
+            card.className = 'book-card';
+
+            var coverHtml =
+              '<div class="cover-wrapper">' +
+                '<div class="book-cover-fallback">📚</div>' +
+                '<img class="book-cover" style="display:none;" alt="' + book.title + ' cover" ' +
+                  'onerror="this.style.display=\'none\'">' +
+              '</div>';
+
+            card.innerHTML =
+              coverHtml +
+              '<p class="book-title">' + book.title + '</p>' +
+              '<p class="book-author">' + book.author + '</p>' +
+              '<p class="book-date">' + (book.date_written || '') + '</p>';
+
+            container.appendChild(card);
+
+            var img = card.querySelector('.book-cover');
+            var existingUrl = book.image_url || book['book-cover'];
+
+            if (existingUrl) {
+              img.src = existingUrl;
+              img.style.display = 'block';
+            } else if (book.title) {
+              // Asynchronous frontend cover fetch from Open Library
+              fetch('https://openlibrary.org/search.json?title=' + encodeURIComponent(book.title) + '&limit=1')
+                .then(function(r) { return r.json(); })
+                .then(function(olData) {
+                  if (olData && olData.docs && olData.docs.length > 0 && olData.docs[0].cover_i) {
+                    img.src = 'https://covers.openlibrary.org/b/id/' + olData.docs[0].cover_i + '-M.jpg';
+                    img.style.display = 'block';
+                  }
+                })
+                .catch(function(e) {});
+            }
+          });
+        })
+        .catch(function(err) {
+          document.getElementById('loading-section').style.display = 'none';
+          document.getElementById('error-section').style.display = 'block';
+        });
+    </script>
+
+  {% elif recommendations %}
+    <div class="books-container">
+      {% for book in recommendations %}
+        <div class="book-card">
+          <div class="cover-wrapper">
+            <div class="book-cover-fallback">📚</div>
+            <img
+              class="book-cover client-cover"
+              data-title="{{ book.title }}"
+              {% if book.image_url %}src="{{ book.image_url }}"{% elif book['book-cover'] %}src="{{ book['book-cover'] }}"{% else %}style="display:none;"{% endif %}
+              alt="{{ book.title }} cover"
+              onerror="this.style.display='none';"
+            >
+          </div>
+          <p class="book-title">{{ book.title }}</p>
+          <p class="book-author">{{ book.author }}</p>
+          <p class="book-date">{{ book.date_written }}</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <script>
+      document.querySelectorAll('.client-cover').forEach(function(img) {
+        var currentSrc = img.getAttribute('src');
+        if (!currentSrc || img.style.display === 'none') {
+          var title = img.getAttribute('data-title');
+          if (title) {
+            fetch('https://openlibrary.org/search.json?title=' + encodeURIComponent(title) + '&limit=1')
+              .then(function(r) { return r.json(); })
+              .then(function(olData) {
+                if (olData && olData.docs && olData.docs.length > 0 && olData.docs[0].cover_i) {
+                  img.src = 'https://covers.openlibrary.org/b/id/' + olData.docs[0].cover_i + '-M.jpg';
+                  img.style.display = 'block';
+                }
+              })
+              .catch(function(e) {});
+          }
+        }
+      });
+    </script>
+{% else %}
+  <div class="no-data">
+    <div style="font-size: 48px; margin-bottom: 16px;">📚</div>
+    <p>No recommendations yet! Log some books first and we'll suggest what to read next.</p>
+  </div>
+{% endif %}
+
+{% if best_sellers %}
+  <!-- Section Divider -->
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
+    <hr style="border: none; height: 1px; background: var(--hairline); margin: 20px 0 36px 0;">
+  </div>
+
+  <!-- NY Times Best Sellers Section (Bottom) -->
+  <h2 class="page-title" style="font-size: 26px;">NY Times Best Sellers Of The Week</h2>
+  <p class="page-subtitle">The top hardcover fiction picks this week</p>
+
+  <div class="nyt-scroll-wrapper">
+    <div class="nyt-scroll-row">
+      {% for book in best_sellers.data %}
+        <div class="nyt-card">
+          <div class="nyt-rank">#{{ book.id }}</div>
+          <div class="cover-wrapper">
+            <div class="book-cover-fallback" style="font-size: 14px; color: var(--ink-muted);">No Cover</div>
+            {% if book.cover %}
+              <img
+                class="book-cover"
+                src="{{ book.cover }}"
+                alt="{{ book.title }} cover"
+                onerror="this.style.display='none';"
+              >
+            {% endif %}
+          </div>
+          <p class="book-title">{{ book.title }}</p>
+          <p class="book-author">{{ book.author }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
 
 {% endblock %}

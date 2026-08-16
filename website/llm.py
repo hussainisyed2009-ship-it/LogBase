@@ -2,8 +2,7 @@ import os
 from dotenv import load_dotenv
 import requests
 import re
-from flask import json, jsonify
-
+import json
 
 
 def call_LLM(most_author, most_genre, background_info): # change the backgroudn info passed in so it is a discription of the user
@@ -57,6 +56,7 @@ def call_LLM(most_author, most_genre, background_info): # change the backgroudn 
 
 def get_cover(title):
     # call open lib search
+    data = None
     try:
         response = requests.get(
             f"https://openlibrary.org/search.json?title={title}&limit=1",
@@ -66,8 +66,8 @@ def get_cover(title):
 
         if response.status_code == 200:
             data = response.json()
-    except requests.exceptions.Timeout:
-        print("error getting data")
+    except Exception as e:
+        print("error getting data:", e)
         data = None
 
     if data and data.get("docs"):

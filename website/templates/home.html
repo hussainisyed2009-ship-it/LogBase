@@ -22,6 +22,178 @@
     letter-spacing: -0.5px;
   }
 
+  /* ── Top-left user stats badges ── */
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .stats-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-full);
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: default;
+    position: relative;
+  }
+
+  .stat-badge.interactive {
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .stat-badge.interactive:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+
+  .stat-badge[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1c1c1e;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--card-border);
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  /* ── Modal overlay & card ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-xxl);
+    padding: 28px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 16px 48px -8px;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    letter-spacing: -0.3px;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--r-sm);
+    transition: color 0.15s ease;
+    line-height: 1;
+  }
+  .modal-close:hover {
+    color: var(--ink);
+  }
+
+  .freeze-modal-body {
+    margin-bottom: 24px;
+  }
+
+  .freeze-stat-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-xl);
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .freeze-stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .freeze-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .freeze-desc {
+    font-size: 14px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    margin: 0;
+    text-align: center;
+  }
+
+  .submit-btn-modal {
+    width: 100%;
+    background: var(--morgan-blue);
+    color: #ffffff;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    padding: 12px 24px;
+    border-radius: var(--r-full);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    margin-top: 8px;
+  }
+  .submit-btn-modal:hover:not(:disabled) {
+    background: var(--morgan-blue-deep);
+  }
+  .submit-btn-modal:disabled {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ink-muted);
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
   /* ── Join-Class widget ── */
   .join-class-widget {
     text-align: right;
@@ -346,8 +518,18 @@
 
 
 <div class="page-header">
-  <div>
+  <div class="header-left">
     <h1 class="page-title">📖 Husky Reading Log</h1>
+    <div class="stats-badge-row">
+      <div class="stat-badge" data-tooltip="Coins earned from logging reads" title="Coins earned from logging reads">
+        <span>🪙</span>
+        <span>{{ coins if coins is defined and coins is not none else 0 }}</span>
+      </div>
+      <div class="stat-badge interactive" id="open-freeze-modal" data-tooltip="Click to view Streak Freeze status" title="Click to view Streak Freeze status">
+        <span>🧊</span>
+        <span>{{ current_user.streak_freezes if current_user.streak_freezes is defined and current_user.streak_freezes is not none else 0 }}</span>
+      </div>
+    </div>
   </div>
 
   {#
@@ -523,6 +705,41 @@
 
 </div>
 
+<!-- ═══ STREAK FREEZE POPUP MODAL ═══ -->
+<div class="modal-overlay" id="freeze-modal" hidden>
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title">Streak Freeze Status</h2>
+      <button type="button" class="modal-close" id="close-freeze-modal">✕</button>
+    </div>
+
+    <div class="freeze-modal-body">
+      <div class="freeze-stat-box">
+        <div class="freeze-stat-label">Available Freezes</div>
+        <div class="freeze-stat-value">
+          {{ current_user.streak_freezes if current_user.streak_freezes is defined and current_user.streak_freezes is not none else 0 }} / 5
+        </div>
+      </div>
+
+      <p class="freeze-desc">
+        {% set last_str = current_user.last_streak if current_user.last_streak is defined and current_user.last_streak is not none else 0 %}
+        {% if last_str > 0 %}
+          Your previous streak was {{ last_str }} days. You can use a streak freeze to restore your streak.
+        {% else %}
+          No broken streak available to restore.
+        {% endif %}
+      </p>
+    </div>
+
+    <form action="/streak/restore" method="POST">
+      {% set can_restore = current_user.last_streak is defined and current_user.last_streak is not none and current_user.last_streak > 0 %}
+      <button type="submit" class="submit-btn-modal" {% if not can_restore %}disabled{% endif %}>
+        Restore Streak
+      </button>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block javascript %}
@@ -533,4 +750,27 @@
   <script src="{{ url_for('static', filename='chooseMethod.js') }}"></script>
   <!-- Load scanner code -->
   <script src="{{ url_for('static', filename='scanning.js') }}"></script>
+  <script>
+    const freezeModal = document.getElementById('freeze-modal');
+    const openFreezeBtn = document.getElementById('open-freeze-modal');
+    const closeFreezeBtn = document.getElementById('close-freeze-modal');
+
+    if (openFreezeBtn && freezeModal) {
+      openFreezeBtn.addEventListener('click', () => {
+        freezeModal.removeAttribute('hidden');
+      });
+    }
+    if (closeFreezeBtn && freezeModal) {
+      closeFreezeBtn.addEventListener('click', () => {
+        freezeModal.setAttribute('hidden', '');
+      });
+    }
+    if (freezeModal) {
+      freezeModal.addEventListener('click', (e) => {
+        if (e.target === freezeModal) {
+          freezeModal.setAttribute('hidden', '');
+        }
+      });
+    }
+  </script>
 {% endblock %}

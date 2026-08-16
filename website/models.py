@@ -14,6 +14,7 @@ class User(db.Model, UserMixin):
     #teacher_class = db.relationship('class_list', backref='teacher', lazy='joined')
     #Streak tracking fields
     current_streak = db.Column(db.Integer, default=0)
+    last_streak = db.Column(db.Integer, default=0)
     last_activity_date = db.Column(db.Date, nullable=True) # Date of last completed activity
     streak_freezes = db.Column(db.Integer, CheckConstraint('streak_freezes <= 5'), default=0)      # Number of freezes owned
     freeze_used_today = db.Column(db.Boolean, default=False) # used to make sure multiple streak freezes aren't used at once

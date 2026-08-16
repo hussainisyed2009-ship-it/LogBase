@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, json, jsonify, redirect, url_for
+from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone, date
@@ -12,6 +12,7 @@ import string
 from .best_sellers import get_best_sellers
 import math
 from .currency import send_coins
+import json
 
 views = Blueprint('views', __name__)
 
@@ -36,7 +37,7 @@ def survey():
 @views.route("/api/book/save", methods=['POST'])
 @login_required
 def save_data():
-# finish writing function
+    total_coins_user = db.session.query(func.sum(currency_logs.amount)).filter(currency_logs.user_id == current_user.id).scalar() or 0
     # 1. Get the JSON payload sent from JavaScript
     data = request.get_json()
     
@@ -67,7 +68,7 @@ def save_data():
             if log.title.lower().strip() == title.lower().strip():
                 coins_to_add = 2
                                     
-            coins_to_add += math.floor(minutes/10)
+        coins_to_add += math.floor(minutes/10)
 
     else:
         coins_to_add += math.floor(minutes/10)
@@ -77,20 +78,26 @@ def save_data():
     db.session.commit()
 
 
-    
-    recent_log = current_user.log_readings[-1]
-    log_id = recent_log.id
-    send_coins('log', log_id, coins_to_add, current_user.id)
+    if (coins_to_add + total_coins_user) < 500:
+        recent_log = current_user.log_readings[-1]
+        log_id = recent_log.id
+        send_coins('log', log_id, coins_to_add, current_user.id)
+        
+        result = f'Reading Logged, {coins_to_add} coins added to wallet!'
+    else:
+        
+        result = f'Reading Logged, however, no coins where added to wallet due to the wallet being full'
 
-    streak = get_reading_streak(current_user.id)
-    today = date.today()
-    if current_user.last_activity_date != today:
-        current_user.current_streak = streak
-        current_user.last_activity_date = date.today()
-        db.session.commit()
+
+    if current_user.last_activity_date != date.today():
+            streak = current_user.current_streak + 1
+            current_user.current_streak = streak
+            current_user.last_streak = 0
+            current_user.last_activity_date = date.today()
+            db.session.commit()
         
 
-    flash(f'Reading Logged, {coins_to_add} coins added to wallet!', category='success')
+    flash(result, category='success')
     return jsonify({"status": "success"}), 200
 # getting book data from api
 @views.route("/api/book/<isbn>")
@@ -148,7 +155,7 @@ def get_most_read_author(user_id):
         Log_reading.author, 
         func.sum(Log_reading.reading_time).label('total_time')
     ).filter(Log_reading.user_id == user_id).group_by(Log_reading.author).order_by(
-        func.sum(Log_reading.reading_time).desc()
+        func.sum(Log_reading.reading_time).desc(), Log_reading.author.asc()
     ).first()
     
     return result[0] if result else None
@@ -159,37 +166,10 @@ def get_most_read_genre(user_id):
         Log_reading.genre, 
         func.sum(Log_reading.reading_time).label('total_time')
     ).filter(Log_reading.user_id == user_id).group_by(Log_reading.genre).order_by(
-        func.sum(Log_reading.reading_time).desc()
+        func.sum(Log_reading.reading_time).desc(), Log_reading.genre.asc()
     ).first()
     
     return result[0] if result else None
-def get_reading_streak(user_id):
-    """Get current reading streak (consecutive days with at least one log)"""
-    from datetime import date
-    
-    # Get all unique dates the user has logged (ordered by date descending)
-    logs = db.session.query(func.date(Log_reading.timestamp)).filter(
-        Log_reading.user_id == user_id
-    ).distinct().order_by(func.date(Log_reading.timestamp).desc()).all()
-    
-    if not logs:
-        return 0
-    
-    streak = 1
-    current_date = logs[0][0]
-    
-    # Check each log date against the previous one
-    for log_date in logs[1:]:
-        log_date = log_date[0]
-        # If dates are consecutive (1 day apart), increment streak
-        if (current_date - log_date).days == 1:
-            streak += 1
-            current_date = log_date
-        else:
-            # Streak broken
-            break
-    
-    return streak
 
 def get_all_reading_stats(user_id):
     """Get all reading statistics for a user"""
@@ -210,8 +190,28 @@ def get_all_reading_stats(user_id):
 @login_required
 def home():
     background = background_info.query.get(current_user.id)
+    total_coins_user = db.session.query(func.sum(currency_logs.amount)).filter(currency_logs.user_id == current_user.id).scalar() or 0
     if background == None:
         return redirect(url_for('views.survey'))
+
+    """
+    Check if streak should be broken
+    """
+    all_logs = current_user.log_readings
+    if all_logs:
+        recent = all_logs[-1]
+        difference = (date.today() - recent.timestamp.date()).days
+
+        if difference > 1:
+            current_user.last_streak = current_user.current_streak
+            current_user.current_streak = 0
+            db.session.commit()
+    else:
+        current_user.last_streak = 0
+        current_user.current_streak = 0
+        db.session.commit()
+            
+
 
     if request.method == 'POST':
         title = request.form.get('title')
@@ -240,7 +240,7 @@ def home():
                 for log in current_user.log_readings:
                     if log.title.lower().strip() == title.lower().strip():
                         coins_to_add = 2
-                    coins_to_add += math.floor(minutes/10)
+                coins_to_add += math.floor(minutes/10)
             else:
                 coins_to_add += math.floor(minutes/10)
                 
@@ -248,34 +248,42 @@ def home():
             db.session.add(new_log)
             db.session.commit()
 
-            recent_log = current_user.log_readings[-1]
-            log_id = recent_log.id
-            send_coins('log', log_id, coins_to_add, current_user.id)
+            
+            if (total_coins_user + coins_to_add) < 500:
+                recent_log = current_user.log_readings[-1]
+                log_id = recent_log.id
+                send_coins('log', log_id, coins_to_add, current_user.id)
+                
+                result = f'Reading Logged, {coins_to_add} coins added to wallet!'
+            else:
+                
+                result = f'Reading Logged, however, no coins where added to wallet due to the wallet being full'
+
+            if current_user.last_activity_date != date.today():
+                streak = current_user.current_streak + 1
+                current_user.current_streak = streak
+                current_user.last_streak = 0
+                current_user.last_activity_date = date.today()
+                db.session.commit()
 
 
-
-            flash(f'Reading Logged, {coins_to_add} coins added to wallet!', category='success')
+            flash(result, category='success')
             return redirect(url_for('views.home'))
-    streak = get_reading_streak(current_user.id)
-    today = date.today()
-    current_user.current_streak = streak
-    current_user.last_activity_date = date.today()
-    db.session.commit()
+    streak = current_user.current_streak
+    
 
     logs = Log_reading.query.filter_by(user_id=current_user.id).all()
-    return render_template("home.html", user=current_user, logs=logs, streak=streak)
+    return render_template("home.html", user=current_user, logs=logs, streak=streak, coins=total_coins_user)
+
+@views.route('/streak/restore', methods=['POST'])
+@login_required
+def restore_streak():
+    return redirect(url_for('home.html'))
+
 
 @views.route('/achievement', methods=['GET'])
 @login_required
 def achievement():
-    '''
-    REMOVE ANY CLASS RELATED GOAL LOGIC, ALLOW USER'S TO CREATE GOALS FOR THEMSELVES
-
-    Add 3 different types of goals:
-     1. the basic minute based goals
-     2. Goal where the user has to read book from their recommendations
-     3. goal where the user has to read x number of different books in a certain period of time
-    '''
     all_user_goals = goals.query.filter(goals.created_by == current_user.id).all()
     # minute goal logic
     minutes_goals = [goal for goal in all_user_goals if goal.type_of_goal == 'minutes']
@@ -430,9 +438,7 @@ def profile():
     total_minutes = db.session.query(func.sum(Log_reading.reading_time)).filter(
         Log_reading.user_id == current_user.id
     ).scalar() or 0
-    most_author = get_most_read_author(current_user.id)
-    most_genre = get_most_read_genre(current_user.id)
-    streak = get_reading_streak(current_user.id)
+    streak = current_user.current_streak
     return render_template("profile.html", user=current_user, total_minutes=total_minutes, most_genre = get_most_read_genre(current_user.id), most_author = get_most_read_author(current_user.id), reading_streak=streak)
 
 @views.route('/recommendations', methods=['GET'])
@@ -453,11 +459,15 @@ def recommend():
 
     user_recommendation = Recommend.query.filter_by(user_id=current_user.id).first()
 
+    # Normalize for comparison
+    def _norm(s):
+        return (s or '').strip().lower()
+
     # Check if cached data is fresh — if so, skip the LLM entirely
     needs_llm = (
         user_recommendation is None or
-        user_recommendation.common_author != most_author or
-        user_recommendation.common_genre != most_genre
+        _norm(user_recommendation.common_author) != _norm(most_author) or
+        _norm(user_recommendation.common_genre) != _norm(most_genre)
     )
 
     if needs_llm:
@@ -500,19 +510,23 @@ def fetch_recommendations():
         return jsonify({"error": "Failed to parse AI response"}), 500
 
     # Save or update the DB cache
+    author_val = most_author or ""
+    genre_val = most_genre or ""
+    bg_val = background.data if background else None
+
     if user_recommendation is None:
         new_row = Recommend(
             user_id=current_user.id,
-            background_info = background.data,
-            common_author=most_author or "None",
-            common_genre=most_genre or "None",
+            background_info=bg_val,
+            common_author=author_val,
+            common_genre=genre_val,
             data=response_json
         )
         db.session.add(new_row)
     else:
-        user_recommendation.common_author = most_author or "None"
-        user_recommendation.common_genre = most_genre or "None"
-        user_recommendation.background_info = background.data or "None"
+        user_recommendation.common_author = author_val
+        user_recommendation.common_genre = genre_val
+        user_recommendation.background_info = bg_val
         user_recommendation.data = response_json
 
     db.session.commit()
