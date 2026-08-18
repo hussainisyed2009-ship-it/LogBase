@@ -280,6 +280,21 @@ def home():
     logs = Log_reading.query.filter_by(user_id=current_user.id).all()
     return render_template("home.html", user=current_user, logs=logs, streak=streak, coins=total_coins_user)
 
+@views.route('/streak/buy/freeze', methods=['POST'])
+@login_required
+def buy_freeze():
+    total_coins_user = db.session.query(func.sum(currency_logs.amount)).filter(currency_logs.user_id == current_user.id).scalar() or 0
+    if current_user.streak_freezes >= 5:
+        return 'max', 200
+    elif total_coins_user < 250:
+        return 'not-enough', 200
+    else:
+        new_deduction = currency_logs(where='freeze', where_id=current_user.id, amount=-250, user_id=current_user.id)
+        db.session.add(new_deduction)
+        current_user.streak_freezes += 1
+        db.session.commit()
+        return 'success', 200
+    
 @views.route('/streak/restore', methods=['POST'])
 @login_required
 def restore_streak():
