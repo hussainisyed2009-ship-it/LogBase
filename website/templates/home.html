@@ -194,6 +194,56 @@
     opacity: 0.5;
   }
 
+  /* ── Buy Streak Freeze Section ── */
+  .buy-freeze-section {
+    background: rgba(35, 64, 139, 0.12);
+    border: 1px solid rgba(35, 64, 139, 0.35);
+    border-radius: var(--r-xl);
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .buy-freeze-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 2px 0;
+  }
+
+  .buy-freeze-subtitle {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin: 0;
+  }
+
+  .buy-freeze-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .btn-pill-buy {
+    background: var(--morgan-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--r-full);
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+  }
+  .btn-pill-buy:hover {
+    background: var(--morgan-blue-deep);
+  }
+
   /* ── Join-Class widget ── */
   .join-class-widget {
     text-align: right;
@@ -445,6 +495,20 @@
     gap: 8px;
     justify-content: center;
   }
+    .warning-box-success {
+    background-color: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.25);
+    color: hwb(115 10% 39%);
+    padding: 10px 14px;
+    border-radius: var(--r-lg);
+    margin-top: 12px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+  }
 
   /* ── Logs list ── */
   .logs { margin-top: 28px; }
@@ -523,11 +587,11 @@
     <div class="stats-badge-row">
       <div class="stat-badge" data-tooltip="Coins earned from logging reads" title="Coins earned from logging reads">
         <span>🪙</span>
-        <span>{{ coins if coins is defined and coins is not none else 0 }}</span>
+        <span id="header-coin-count">{{ coins if coins is defined and coins is not none else 0 }}</span>
       </div>
       <div class="stat-badge interactive" id="open-freeze-modal" data-tooltip="Click to view Streak Freeze status" title="Click to view Streak Freeze status">
         <span>🧊</span>
-        <span>{{ current_user.streak_freezes if current_user.streak_freezes is defined and current_user.streak_freezes is not none else 0 }}</span>
+        <span id="header-freeze-count">{{ current_user.streak_freezes if current_user.streak_freezes is defined and current_user.streak_freezes is not none else 0 }}</span>
       </div>
     </div>
   </div>
@@ -713,11 +777,39 @@
       <button type="button" class="modal-close" id="close-freeze-modal">✕</button>
     </div>
 
+    <!-- Buy Streak Freeze Section -->
+    <div class="buy-freeze-section">
+      <div>
+        <h3 class="buy-freeze-title">Buy Streak Freeze</h3>
+        <p class="buy-freeze-subtitle">Protect your reading streak</p>
+      </div>
+      <div style="text-align: right;">
+        <div class="buy-freeze-price">250 Coins</div>
+        <button type="button" class="btn-pill-buy" id="btn-buy-freeze">
+          Buy Freeze
+        </button>
+      </div>
+    </div>
+
+    <!-- Buy Freeze Error Messages (Hidden by default) -->
+    <div id="buy-freeze-good" class="warning-box-success hidden" style="margin-top: -8px; margin-bottom: 16px;">
+      <span>Freeze bought succesfully!</span>
+    </div>
+    <div id="buy-freeze-err-coins" class="warning-box hidden" style="margin-top: -8px; margin-bottom: 16px;">
+      <span>Not enough coins to purchase a streak freeze.</span>
+    </div>
+    <div id="buy-freeze-err-max" class="warning-box hidden" style="margin-top: -8px; margin-bottom: 16px;">
+      <span>You have reached the maximum limit of 5 streak freezes.</span>
+    </div>
+    <div id="buy-freeze-err-network" class="warning-box hidden" style="margin-top: -8px; margin-bottom: 16px;">
+      <span>Network error occurred. Please try again.</span>
+    </div>
+
     <div class="freeze-modal-body">
       <div class="freeze-stat-box">
         <div class="freeze-stat-label">Available Freezes</div>
         <div class="freeze-stat-value">
-          {{ current_user.streak_freezes if current_user.streak_freezes is defined and current_user.streak_freezes is not none else 0 }} / 5
+          <span id="modal-freeze-count">{{ current_user.streak_freezes if current_user.streak_freezes is defined and current_user.streak_freezes is not none else 0 }}</span> / 5
         </div>
       </div>
 
@@ -750,6 +842,8 @@
   <script src="{{ url_for('static', filename='chooseMethod.js') }}"></script>
   <!-- Load scanner code -->
   <script src="{{ url_for('static', filename='scanning.js') }}"></script>
+  <!-- load buying code -->
+     <script src="{{ url_for('static', filename='freeze.js') }}"></script>
   <script>
     const freezeModal = document.getElementById('freeze-modal');
     const openFreezeBtn = document.getElementById('open-freeze-modal');

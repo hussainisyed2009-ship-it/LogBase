@@ -389,44 +389,61 @@ def achievement():
 @login_required
 def leaderboards():
     # Query total reading time per user (all-time, weekly, or monthly)
-    timeframe = request.args.get('timeframe')
+    timeframe = request.args.get('timeframe', 'all')
 
-    # check
-    if timeframe == 'This week':
-        
+    # Query leaderboard data based on timeframe
+    if timeframe == 'weekly' or timeframe == 'This week':
         today = datetime.now()
-        start_of_week = today - timedelta(days=today.weekday()) # this gets the index of the day, ex. monday = 0
-        start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0) # makes it so the first day of the week is only the day and not time
-        leaderboard_data = (
-                    db.session.query(User.first_name, func.sum(Log_reading.reading_time).label('total_minutes'))
-                    .join(Log_reading, User.id == Log_reading.user_id)
-                    .filter(Log_reading.timestamp >= start_of_week)
-                    .group_by(User.id)
-                    .order_by(func.sum(Log_reading.reading_time).desc())
-                    .all()
+        start_of_week = today - timedelta(days=today.weekday())
+        start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+        query = (
+            db.session.query(User.id, User.first_name, func.sum(Log_reading.reading_time).label('total_minutes'))
+            .join(Log_reading, User.id == Log_reading.user_id)
+            .filter(Log_reading.timestamp >= start_of_week)
+            .group_by(User.id)
+            .order_by(func.sum(Log_reading.reading_time).desc(), User.first_name.asc())
         )
-    elif timeframe == 'This month':
-        # get the start of the month
+    elif timeframe == 'monthly' or timeframe == 'This month':
         this_month = datetime.now()
         start_of_month = this_month.replace(hour=0, minute=0, second=0, microsecond=0, day=1)
-        leaderboard_data = (
-                    db.session.query(User.first_name, func.sum(Log_reading.reading_time).label('total_minutes'))
-                    .join(Log_reading, User.id == Log_reading.user_id)
-                    .filter(Log_reading.timestamp >= start_of_month)
-                    .group_by(User.id)
-                    .order_by(func.sum(Log_reading.reading_time).desc())
-                    .all()
+        query = (
+            db.session.query(User.id, User.first_name, func.sum(Log_reading.reading_time).label('total_minutes'))
+            .join(Log_reading, User.id == Log_reading.user_id)
+            .filter(Log_reading.timestamp >= start_of_month)
+            .group_by(User.id)
+            .order_by(func.sum(Log_reading.reading_time).desc(), User.first_name.asc())
         )
     else:
-        leaderboard_data = (
-            db.session.query(User.first_name, func.sum(Log_reading.reading_time).label('total_minutes'))
+        query = (
+            db.session.query(User.id, User.first_name, func.sum(Log_reading.reading_time).label('total_minutes'))
             .join(Log_reading, User.id == Log_reading.user_id)
             .group_by(User.id)
-            .order_by(func.sum(Log_reading.reading_time).desc())
-            .all()
+            .order_by(func.sum(Log_reading.reading_time).desc(), User.first_name.asc())
         )
 
-    return render_template("leaderboards.html", user=current_user, leaderboard=leaderboard_data, timeframe=timeframe)
+    full_leaderboard_data = query.all()
+
+    # Determine current user's rank and total minutes in this timeframe
+    user_rank = "Unranked"
+    user_minutes = 0
+
+    for rank, row in enumerate(full_leaderboard_data, start=1):
+        if row.id == current_user.id:
+            user_rank = f"#{rank}"
+            user_minutes = row.total_minutes
+            break
+
+    # Limit leaderboard list to top 10
+    top_10_leaderboard = [(row.first_name, row.total_minutes) for row in full_leaderboard_data[:10]]
+
+    return render_template(
+        "leaderboards.html",
+        user=current_user,
+        leaderboard=top_10_leaderboard,
+        timeframe=timeframe,
+        user_rank=user_rank,
+        user_minutes=user_minutes
+    )
 
 @views.route('/delete-log/<int:log_id>', methods=['POST'])
 @login_required

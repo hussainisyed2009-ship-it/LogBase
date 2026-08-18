@@ -56,10 +56,9 @@
   /* Body rows */
   .lb-table tbody tr {
     border-bottom: 1px solid var(--hairline);
-    transition: background 0.12s ease;
+    cursor: default;
   }
   .lb-table tbody tr:last-child { border-bottom: none; }
-  .lb-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
 
   .lb-table td {
     padding: 14px 20px;
@@ -89,10 +88,6 @@
   .lb-table tbody tr.rank-1 { background: rgba(35, 64, 139, 0.15); }
   .lb-table tbody tr.rank-2 { background: rgba(35, 64, 139, 0.09); }
   .lb-table tbody tr.rank-3 { background: rgba(35, 64, 139, 0.05); }
-
-  .lb-table tbody tr.rank-1:hover { background: rgba(35, 64, 139, 0.22); }
-  .lb-table tbody tr.rank-2:hover { background: rgba(35, 64, 139, 0.14); }
-  .lb-table tbody tr.rank-3:hover { background: rgba(35, 64, 139, 0.10); }
 
   .mins-badge {
     display: inline-flex;
@@ -126,22 +121,84 @@
     background: #0f1e35;
     color: #ffffff;
   }
+
+  /* No Data Card */
+  .no-data-card {
+    padding: 48px 20px;
+    text-align: center;
+  }
+  .no-data-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    margin: 0;
+  }
+
+  /* User Rank Bottom Card */
+  .user-rank-card {
+    margin-top: 20px;
+    background: var(--card-bg);
+    border: 1px solid rgba(35, 64, 139, 0.4);
+    border-radius: var(--r-xl);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: rgba(5, 0, 56, 0.12) 0px 8px 24px -4px;
+    cursor: default;
+  }
+
+  .user-rank-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-rank-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .user-rank-val {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--morgan-blue);
+    padding: 4px 14px;
+    border-radius: var(--r-full);
+  }
+
+  .user-rank-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+  }
 </style>
 
 <div class="lb-container">
   <div class="page-header">
-    <h1 class="page-title">🏆 Leaderboards</h1>
+    <h1 class="page-title">Leaderboards</h1>
     <p class="page-subtitle">Top readers across Morgan School</p>
   </div>
 
   <form method="GET" action="{{ url_for('views.leaderboards') }}" id="timeframe-form" style="margin-bottom: 14px; display: flex; justify-content: flex-start;">
     <select name="timeframe" id="timeframe-select" onchange="this.form.submit()" class="lb-select">
-      <option value="all" {% if timeframe == 'all' or not timeframe %}selected{% endif %}>All-time</option>
-      <option value="weekly" {% if timeframe == 'weekly' %}selected{% endif %}>This week</option>
-      <option value="monthly" {% if timeframe == 'monthly' %}selected{% endif %}>This month</option>
+      <option value="all" {% if timeframe == 'all' or timeframe == 'All-time' or not timeframe %}selected{% endif %}>All-time</option>
+      <option value="weekly" {% if timeframe == 'weekly' or timeframe == 'This week' %}selected{% endif %}>This week</option>
+      <option value="monthly" {% if timeframe == 'monthly' or timeframe == 'This month' %}selected{% endif %}>This month</option>
     </select>
   </form>
 
+  {% if leaderboard and leaderboard|length > 0 %}
   <div class="lb-card">
     <table class="lb-table">
       <thead>
@@ -156,16 +213,7 @@
         <tr class="{% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}">
           <td>
             <div class="rank-cell">
-              {{ loop.index }}
-              {% if loop.index == 1 %}
-                <img class="troph" src="{{ url_for('static', filename='images/1trophy.png') }}">
-              {% elif loop.index == 2 %}
-                <img class="troph" src="{{ url_for('static', filename='images/2nd.png') }}">
-              {% elif loop.index == 3 %}
-                <img class="troph" src="{{ url_for('static', filename='images/3rd.png') }}">
-              {% else %}
-                <img class="troph" src="{{ url_for('static', filename='images/low.png') }}">
-              {% endif %}
+              #{{ loop.index }}
             </div>
           </td>
           <td>{{ user }}</td>
@@ -174,6 +222,23 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+  {% else %}
+  <div class="lb-card no-data-card">
+    <p class="no-data-title">No User Data</p>
+  </div>
+  {% endif %}
+
+  <!-- User Rank Bottom Card -->
+  <div class="user-rank-card">
+    <div class="user-rank-info">
+      <span class="user-rank-label">Your Rank</span>
+      <span class="user-rank-val">{{ user_rank }}</span>
+    </div>
+    <div class="user-rank-details">
+      <span class="user-name">{{ current_user.first_name }}</span>
+      <span class="mins-badge">⏱ {{ user_minutes }} mins</span>
+    </div>
   </div>
 </div>
 {% endblock %}
