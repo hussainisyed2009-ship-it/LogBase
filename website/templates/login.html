@@ -68,6 +68,30 @@
     margin-bottom: 6px;
   }
 
+  .field-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .field-header label {
+    margin-bottom: 0;
+  }
+
+  .forgot-pass-link {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .forgot-pass-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
+  }
+
   .auth-input {
     width: 100%;
     height: 44px;
@@ -131,26 +155,29 @@
 <div class="auth-wrap">
   <div class="auth-card">
     <div class="auth-logo">
-      <span class="auth-logo-badge">📖 Husky Reading Log</span>
+      <span class="auth-logo-badge">LogBase</span>
     </div>
 
     <form method="POST">
       <h1 class="auth-title">Welcome back</h1>
-      <p class="auth-subtitle">Sign in to your Morgan School account</p>
+      <p class="auth-subtitle">Sign-in to your LogBase account</p>
 
       <div class="field-group">
-        <label for="email">Morgan Email Address</label>
+        <label for="email">Email Address</label>
         <input
           type="email"
           class="auth-input"
           id="email"
           name="email"
-          placeholder="yourname@morgan.edu"
+          placeholder="yourname@gmail.com"
         >
       </div>
 
       <div class="field-group">
-        <label for="password">Password</label>
+        <div class="field-header">
+          <label for="password">Password</label>
+          <a href="/email_for_password" class="forgot-pass-link">Forgot password?</a>
+        </div>
         <input
           type="password"
           class="auth-input"

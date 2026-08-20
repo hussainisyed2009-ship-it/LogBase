@@ -245,7 +245,7 @@
 </style>
 
 <div class="profile-container">
-  <h1 class="page-title">👤 Profile</h1>
+  <h1 class="page-title">Profile</h1>
 
   <!-- Profile Header -->
   <div class="profile-header-card">
@@ -257,86 +257,28 @@
     >
     <div class="profile-info">
       <h2 class="profile-name">{{ user.first_name }}</h2>
-      <div>
-        {% if user.is_admin %}
-          <span class="role-badge teacher">🍎 Teacher</span>
-        {% else %}
-          <span class="role-badge student">🎓 Student</span>
-        {% endif %}
-      </div>
     </div>
   </div>
 
-  {#
-  <!-- Classes Section -->
-  <div class="section-card">
-    <h2 class="section-title">🏫 Enrolled Classes</h2>
 
-    {% if not user.is_admin %}
-      {% if user.involvement %}
-        <div class="classes-grid">
-          {% for enrollment in user.involvement %}
-            <div class="class-card-item">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-                <h3 class="class-name">{{ enrollment.classes.class_name }}</h3>
-                <span class="class-code-badge">🔑 {{ enrollment.classes.class_code }}</span>
-              </div>
-              <p class="class-meta">
-                <i class="fa fa-user-circle"></i>
-                Teacher: {{ enrollment.classes.teacher.first_name if enrollment.classes.teacher else 'Unknown' }}
-              </p>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-state">
-          <i class="fa fa-university"></i>
-          <p style="margin: 0; font-size: 14px;">You haven't joined any classes yet. Enter a class code on the Home page to join!</p>
-        </div>
-      {% endif %}
-    {% else %}
-      {% if user.teacher_class %}
-        <div class="classes-grid">
-          {% for single_class in user.teacher_class %}
-            <div class="class-card-item">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-                <h3 class="class-name">{{ single_class.class_name }}</h3>
-                <span class="class-code-badge">🔑 {{ single_class.class_code }}</span>
-              </div>
-              <p class="class-meta">
-                <i class="fa fa-users"></i>
-                {{ single_class.enrollments | length if single_class.enrollments else 0 }} Enrolled Students
-              </p>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-state">
-          <i class="fa fa-university"></i>
-          <p style="margin: 0; font-size: 14px;">No classes created yet. Go to the Admin Panel to create your first class!</p>
-        </div>
-      {% endif %}
-    {% endif %}
-  </div>
-  #}
 
   <!-- Reading Statistics -->
   <div class="section-card">
-    <h2 class="section-title">📊 Reading Statistics</h2>
+    <h2 class="section-title">Reading Statistics</h2>
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">📚 Most Read Genre</div>
+        <div class="stat-label">Most Read Genre</div>
         <div class="stat-value">{{ most_genre if most_genre else 'None' }}</div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-label">✍️ Most Read Author</div>
+        <div class="stat-label">Most Read Author</div>
         <div class="stat-value">{{ most_author if most_author else 'None' }}</div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-label">⏱️ Total Reading Time</div>
+        <div class="stat-label">Total Reading Time</div>
         <div class="stat-value">
           {{ total_minutes }}
           <span style="font-size: 14px; color: var(--ink-muted); font-weight: 500;">mins</span>
@@ -346,7 +288,7 @@
 
     <!-- Streak -->
     <div class="streak-card">
-      <div class="stat-label">🔥 Current Reading Streak</div>
+      <div class="stat-label">Current Reading Streak</div>
       <div class="fire-emoji">🔥</div>
       <div class="stat-value" style="color: #ff9f59;">{{ reading_streak }} day{{ 's' if reading_streak != 1 else '' }}</div>
       <p style="color: var(--ink-muted); font-size: 13px; margin-top: 6px; margin-bottom: 0;">Keep the reading streak going!</p>
