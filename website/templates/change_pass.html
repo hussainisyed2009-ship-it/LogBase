@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %}Sign Up — LogBase{% endblock %}
+{% extends "base.html" %} {% block title %}Set New Password — LogBase{% endblock %}
 
 {% block content %}
 <style>
@@ -52,10 +52,11 @@
     color: var(--ink-muted);
     font-size: 14px;
     margin: 0 0 28px 0;
+    line-height: 1.5;
   }
 
   .field-group {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   .field-group label {
@@ -113,6 +114,24 @@
     box-shadow: 0 6px 20px rgba(35, 64, 139, 0.5);
   }
 
+  .back-link-wrapper {
+    text-align: center;
+    margin-top: 18px;
+  }
+
+  .back-link {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .back-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
+  }
+
   .auth-tagline {
     text-align: center;
     margin-top: 28px;
@@ -135,54 +154,38 @@
     </div>
 
     <form method="POST">
-      <h1 class="auth-title">Create an account</h1>
-      <p class="auth-subtitle">Join the LogBase reading community</p>
+      <h1 class="auth-title">Set New Password</h1>
+      <p class="auth-subtitle">Choose a new secure password for your LogBase account.</p>
 
       <div class="field-group">
-        <label for="email">Email Address</label>
-        <input
-          type="email"
-          class="auth-input"
-          id="email"
-          name="email"
-          placeholder="Enter email"
-        >
-      </div>
-
-      <div class="field-group">
-        <label for="FirstName">First Name</label>
-        <input
-          type="text"
-          class="auth-input"
-          id="FirstName"
-          name="FirstName"
-          placeholder="Enter first name"
-        >
-      </div>
-
-      <div class="field-group">
-        <label for="password1">Password</label>
+        <label for="password1">New Password</label>
         <input
           type="password"
           class="auth-input"
           id="password1"
           name="password1"
-          placeholder="Enter password"
+          placeholder="Enter new password"
+          required
         >
       </div>
 
       <div class="field-group">
-        <label for="password2">Confirm Password</label>
+        <label for="password2">Confirm New Password</label>
         <input
           type="password"
           class="auth-input"
           id="password2"
           name="password2"
-          placeholder="Confirm password"
+          placeholder="Confirm new password"
+          required
         >
       </div>
 
-      <button type="submit" class="auth-btn">Sign Up</button>
+      <button type="submit" class="auth-btn">Update Password</button>
+
+      <div class="back-link-wrapper">
+        <a href="{{ url_for('auth.login') }}" class="back-link">← Back to Sign In</a>
+      </div>
     </form>
 
     <div class="auth-tagline">
