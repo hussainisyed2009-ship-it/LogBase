@@ -9,6 +9,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
     first_name = db.Column(db.String(150))
+    email_verified = db.Column(db.Boolean, default=False)
     #is_admin = db.Column(db.Boolean, default=False)
     log_readings = db.relationship('Log_reading', backref='user', lazy=True)
     #teacher_class = db.relationship('class_list', backref='teacher', lazy='joined')
