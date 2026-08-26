@@ -723,5 +723,3 @@ def edit_goal():
 
     # Redirect back to the admin page to refresh the view and close the modal
     return redirect(url_for('views.achievement'))
-
-

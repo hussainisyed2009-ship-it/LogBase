@@ -524,7 +524,30 @@
     padding-top: 20px;
   }
 
-  .logs ul { list-style: none; padding: 0; margin: 0; }
+  .logs-list, .logs ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  /* Custom scrollbar for logs */
+  .logs-list::-webkit-scrollbar, .logs ul::-webkit-scrollbar {
+    width: 6px;
+  }
+  .logs-list::-webkit-scrollbar-track, .logs ul::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--r-full);
+  }
+  .logs-list::-webkit-scrollbar-thumb, .logs ul::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: var(--r-full);
+  }
+  .logs-list::-webkit-scrollbar-thumb:hover, .logs ul::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
 
   .logs li {
     background: rgba(255, 255, 255, 0.02);
@@ -749,7 +772,7 @@
   {% if logs %}
   <div class="logs">
     <p class="logs-heading">Your logged readings</p>
-    <ul>
+    <ul class="logs-list">
       {% for l in logs %}
         <li>
           <div>
