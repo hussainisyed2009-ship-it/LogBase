@@ -13,6 +13,7 @@ from .best_sellers import get_best_sellers
 import math
 from .currency import send_coins
 import json
+import re
 
 views = Blueprint('views', __name__)
 
@@ -102,44 +103,66 @@ def save_data():
 # getting book data from api
 @views.route("/api/book/<isbn>")
 def get_book(isbn):
-    # Call Open Library from the server side
-
-    response = requests.get(
-        f"https://openlibrary.org/isbn/{isbn}.json",
-        headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) husky-reading-log/1.0"}
-    )
-    print("Status:", response.status_code)
-    print("Body:", response.text)
-    if response.status_code != 200:
-        return jsonify({"error": "Book not found"}), 404
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) LogBase/1.0 (contact: noreply.logbase@gmail.com)"
+    }
     
-    
-    data = response.json()
+    session = requests.Session()
+    adapter = requests.adapters.HTTPAdapter(max_retries=2)
+    session.mount('https://', adapter)
+    session.mount('http://', adapter)
 
-    if "authors" in data and len(data["authors"]) > 0:
-        # getting key
-        author_key = data["authors"][0]["key"]
-        # openlib api call
-        author_response = requests.get(
-        f"https://openlibrary.org{author_key}.json",
-        headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) husky-reading-log/1.0"}
+    try:
+        response = session.get(
+            f"https://openlibrary.org/isbn/{isbn}.json",
+            headers=headers,
+            timeout=8
         )
-        # parse json for author name
-        author_data = author_response.json()
-        author_name = author_data["name"]
-        print(author_name)
+        print("Status:", response.status_code)
+        if response.status_code != 200:
+            return jsonify({"error": "Book not found"}), 404
+        
+        data = response.json()
+    except Exception as e:
+        print("Error fetching book from Open Library:", e)
+        return jsonify({"error": "Failed to connect to book database"}), 502
+
+    # Parse author name safely
+    author_name = "Unknown Author"
+    if "authors" in data and isinstance(data["authors"], list) and len(data["authors"]) > 0:
+        author_key = data["authors"][0].get("key")
+        if author_key:
+            try:
+                author_response = session.get(
+                    f"https://openlibrary.org{author_key}.json",
+                    headers=headers,
+                    timeout=8
+                )
+                if author_response.status_code == 200:
+                    author_data = author_response.json()
+                    author_name = author_data.get("name", "Unknown Author")
+            except Exception as e:
+                print("Error fetching author details:", e)
+
+    # Book title
+    book_title = data.get("title", "Unknown Title")
+
+    # Book genre / subject
+    subjects = data.get("subjects")
+    if subjects and isinstance(subjects, list) and len(subjects) > 0:
+        first_subject = subjects[0]
+        book_genre = first_subject if isinstance(first_subject, str) else str(first_subject)
     else:
-        author_name = "unknown"
-    # book title
-    book_title = data["title"]
-    print(book_title)
-    # genre
-    book_genre = data.get("subjects", ["unknown"])[0]
-    print(book_genre)
-    # cover
-    isbn_13 = data["isbn_13"][0]
-    book_cover = f"https://covers.openlibrary.org/b/isbn/{isbn_13}-M.jpg"
-    # final returns lib
+        book_genre = "General"
+
+    # Book cover
+    isbn_13_list = data.get("isbn_13") or data.get("isbn_10")
+    if isbn_13_list and len(isbn_13_list) > 0:
+        cover_isbn = isbn_13_list[0]
+        book_cover = f"https://covers.openlibrary.org/b/isbn/{cover_isbn}-M.jpg"
+    else:
+        book_cover = f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg"
+
     book_data = {
         "title": book_title,
         "author": author_name,
@@ -541,13 +564,19 @@ def fetch_recommendations():
     background = background_info.query.get(current_user.id)
     user_recommendation = Recommend.query.filter_by(user_id=current_user.id).first()
 
-    response = call_LLM(most_author=most_author, most_genre=most_genre, background_info=background.data)
+    bg_info = background.data if background else "General reader"
+    response = call_LLM(most_author=most_author, most_genre=most_genre, background_info=bg_info)
 
     if response is None:
         return jsonify({"error": "LLM unavailable, please try again later"}), 503
 
     try:
-        response_json = json.loads(response)
+        # Strip markdown fences if present
+        clean_response = response.strip()
+        match = re.search(r'\[.*\]', clean_response, re.DOTALL)
+        if match:
+            clean_response = match.group(0)
+        response_json = json.loads(clean_response)
         for book in response_json:
             cover_url = get_cover(book.get('title'))
             if cover_url is not None:
